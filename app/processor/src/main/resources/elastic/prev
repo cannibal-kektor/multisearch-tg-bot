@@ -1,0 +1,21 @@
+{
+    "analysis": {
+      "analyzer": {
+        "ru_eng": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "russian_morphology",
+            "english_morphology"
+          ]
+        }
+      }
+    },
+
+  "index": {
+    "sort.field": "serialNumber",
+    "sort.order": "asc"
+  }
+
+}

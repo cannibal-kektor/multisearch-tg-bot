@@ -1,0 +1,51 @@
+cluster.name: "docker-elastic-cluster"
+network.host: 0.0.0.0
+#discovery.seed_hosts:
+#   - elastic
+#cluster.initial_master_nodes: 
+#   - elastic
+discovery.type: single-node
+#http.port: ${ES_PORT}
+
+#----------------------- BEGIN SECURITY AUTO CONFIGURATION -----------------------
+#
+# The following settings, TLS certificates, and keys have been automatically      
+# generated to configure Elasticsearch security features on 14-08-2024 10:45:35
+#
+# --------------------------------------------------------------------------------
+
+# Enable security features
+xpack:
+  security:
+    enabled: true
+    autoconfiguration.enabled: true
+    enrollment.enabled: true
+# Enable encryption for HTTP API client connections, such as Kibana, Logstash, and Agents
+    http:
+      ssl:
+        enabled: true
+        client_authentication: optional
+        verification_mode: full
+        key: certs/elastic01.key
+        certificate: certs/elastic01.pem
+        certificate_authorities:
+           - certs/ca.pem
+# Enable encryption and mutual authentication between cluster nodes
+    transport:
+      ssl:
+        enabled: true
+        client_authentication: required
+        verification_mode: full
+        key: certs/elastic01.key
+        certificate: certs/elastic01.pem
+        certificate_authorities:
+           - certs/ca.pem  
+#    authc.realms:
+#      pki.realm1:
+#        order: 1
+#        certificate_authorities: "certs/ca.crt"
+#        username_pattern: "CN=(.*?)(?:,|$)"
+#        files.role_mapping: "ES_PATH_CONF/role_mapping.yml"
+#      native.realm2:
+#        order: 2     
+#----------------------- END SECURITY CONFIGURATION -------------------------

@@ -1,0 +1,299 @@
+name: multisearch
+services:
+
+  telegramBot:
+    build:
+      context: ./app
+      no_cache: true
+      dockerfile: ./bot/Dockerfile
+    depends_on:
+      - mongo01
+      - rabbit01
+      - elastic01
+      - elastic-agent
+    image: multisearch-telegram-bot
+    hostname: telegramBot
+    container_name: telegramBot
+    environment:
+      - BOT_USERNAME=${BOT_USERNAME}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_CREATOR=${BOT_CREATOR}
+    volumes:
+      - ./certificates/ca:/opt/workspace/multisearchBot/application/BOOT-INF/classes/ca
+      - ./certificates/mongo/client:/opt/workspace/multisearchBot/application/BOOT-INF/classes/mongo
+      - ./certificates/rabbit/client:/opt/workspace/multisearchBot/application/BOOT-INF/classes/rabbit
+    labels:
+      - "monitor"
+    networks:
+      - rabbitmq-net
+      - mongo-net
+
+  multisearchProcessor:
+    build:
+      context: ./app
+      no_cache: true
+      dockerfile: ./processor/Dockerfile
+    depends_on:
+      - mongo01
+      - rabbit01
+      - elastic01
+      - elastic-agent
+    image: multisearch-processor
+    hostname: multisearchProcessor
+    container_name: multisearchProcessor
+    environment:
+      - BOT_USERNAME=${BOT_USERNAME}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_CREATOR=${BOT_CREATOR}
+    volumes:
+      - ./certificates/ca:/opt/workspace/multisearchProcessor/application/BOOT-INF/classes/ca
+      - ./certificates/mongo/client:/opt/workspace/multisearchProcessor/application/BOOT-INF/classes/mongo
+      - ./certificates/rabbit/client:/opt/workspace/multisearchProcessor/application/BOOT-INF/classes/rabbit
+      - ./certificates/elastic/client:/opt/workspace/multisearchProcessor/application/BOOT-INF/classes/elastic/cert
+    labels:
+      - "monitor"
+    networks:
+      - rabbitmq-net
+      - mongo-net
+      - elastic-net
+
+  rabbit01:
+    image: rabbitmq:3-management
+    hostname: rabbit01
+    container_name: rabbit01
+    volumes:
+      - ./conf/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./conf/enabled_plugins:/etc/rabbitmq/enabled_plugins
+      - ./conf/setup_definition.json:/etc/rabbitmq/conf/setup_definition.json
+      - ./certificates/rabbit/server:/etc/rabbitmq/conf/certs
+      - ./certificates/ca/ca.pem:/etc/rabbitmq/conf/certs/ca.pem
+      - rabbitmq-data:/var/lib/rabbitmq/
+    labels:
+      - "monitor"
+    ports:
+      - 15671:15671
+      - 5671:5671
+    networks:
+      - rabbitmq-net
+
+  mongo01:
+    image: mongo
+    hostname: mongo01
+    container_name: mongo01
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    command: ["mongod","--config", "/etc/mongod.conf"]
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --host mongo01:27017 -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD} --quiet --tls --tlsCAFile /etc/ssl/ca.pem --authenticationDatabase admin --eval
+      interval: 5s
+      timeout: 30s
+      start_period: 10s
+      start_interval: 1s
+      retries: 5
+    labels:
+      - "monitor"
+    volumes:
+      - ./certificates/mongo/server/mongo01.pem:/etc/ssl/mongo01.pem
+      - ./certificates/ca/ca.pem:/etc/ssl/ca.pem
+      - ./conf/mongo/mongod.conf:/etc/mongod.conf
+      - ./conf/mongo/mongo-create-user.js:/docker-entrypoint-initdb.d/mongo-create-user.js
+      - mongo-data:/data/db
+    networks:
+      - mongo-net
+      
+  mongosetup:
+    image: mongo
+    depends_on:
+      mongo01:
+        condition: service_healthy
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    labels:
+      - "monitor1"
+    volumes:
+      - ./conf/mongo/mongo-setup.sh:/scripts/mongo-setup.sh
+      - ./certificates/ca/ca.pem:/etc/ssl/ca.pem
+    restart: "no"
+    entrypoint: [ "bash", "/scripts/mongo-setup.sh"]
+    networks:
+      - mongo-net
+
+  elastic-setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    depends_on:
+      elastic01:
+        condition: service_healthy
+    labels:
+      - "monitor1"
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - KIBANA_PASSWORD=${KIBANA_PASSWORD}
+    volumes:
+      - ./conf/elastic/elasticSetup.sh:/usr/share/elasticsearch/config/elasticSetup.sh
+      - ./certificates/elastic/server:/usr/share/elasticsearch/config/certs
+      - ./certificates/ca/ca.pem:/usr/share/elasticsearch/config/certs/ca.pem
+    restart: "no"
+    command: >
+      bash config/elasticSetup.sh
+    networks:
+      - elastic-net
+      
+  elastic01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    hostname: elastic01
+    container_name: elastic01
+    labels:
+      - "monitor"
+    volumes:
+      - ./certificates/elastic/server:/usr/share/elasticsearch/config/certs
+      - ./certificates/ca/ca.pem:/usr/share/elasticsearch/config/certs/ca.pem
+      - ./conf/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - esdata01:/usr/share/elasticsearch/data
+    ports:
+      - ${ES_PORT}:9200
+    environment:
+      - ES_PORT=${ES_PORT}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cert config/certs/elastic01.pem --key config/certs/elastic01.key --cacert config/certs/ca.pem https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    
+    networks:
+      - elastic-net
+
+
+  kibana:
+    depends_on:
+      elastic-setup:
+        condition: service_completed_successfully
+    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    hostname: kibana
+    container_name: kibana
+    labels:
+      - "monitor"
+    volumes:
+      - ./certificates/elastic/kibana:/usr/share/kibana/config/certs
+      - ./certificates/ca/ca.pem:/usr/share/kibana/config/certs/ca.pem
+      - ./conf/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+      - kibanadata:/usr/share/kibana/data
+    ports:
+      - ${KIBANA_PORT}:5601
+    environment:
+      - KIBANA_USERNAME=${KIBANA_USERNAME}
+      - KIBANA_PASSWORD=${KIBANA_PASSWORD}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+    mem_limit: ${MEM_LIMIT}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I --cacert config/certs/ca.pem https://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120    
+    networks:
+      - elastic-net
+
+
+  fleet-server:
+    image: docker.elastic.co/beats/elastic-agent:${STACK_VERSION}
+    container_name: fleet-server
+    hostname: fleet-server
+    depends_on:
+      kibana:
+        condition: service_healthy
+      elastic01:
+        condition: service_healthy    
+    environment:
+      - FLEET_SERVER_ENABLE=1
+      - FLEET_SERVER_ELASTICSEARCH_HOST=https://elastic01:9200
+      - FLEET_SERVER_CERT=/usr/share/elastic-agent/certs/agent.pem
+      - FLEET_SERVER_CERT_KEY=/usr/share/elastic-agent/certs/agent.key
+      - FLEET_SERVER_POLICY_ID=fleet-server-policy
+      - FLEET_URL=https://fleet-server:8220
+      - KIBANA_FLEET_SETUP=1
+      - KIBANA_HOST=https://kibana:5601
+      - KIBANA_FLEET_USERNAME=${ELASTIC_USERNAME}
+      - KIBANA_FLEET_PASSWORD=${ELASTIC_PASSWORD}
+    labels:
+      - "monitor1"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+#          "curl -s https://localhost:8220/api/status | grep -q 'HEALTHY'",
+          "curl -s --cacert /etc/ssl/certs/ca.pem https://localhost:8220/api/status | grep -q 'HEALTHY'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    volumes:
+      - fleet-server-data:/usr/share/elastic-agent
+      - ./certificates/elastic/fleet:/usr/share/elastic-agent/certs
+#      - ./certificates/ca/ca.pem:/usr/share/elastic-agent/certs/ca.pem
+      - ./certificates/ca/ca.pem:/etc/ssl/certs/ca.pem
+    ports:
+      - 8220:8220
+    networks:
+      - elastic-net
+
+  elastic-agent:
+    image: docker.elastic.co/beats/elastic-agent:${STACK_VERSION}
+    container_name: elastic-agent
+    hostname: elastic-agent
+    depends_on:
+      fleet-server:
+        condition: service_healthy
+    user: root
+    environment:
+      - FLEET_ENROLL=1
+      - FLEET_URL=https://fleet-server:8220
+#      - FLEET_CA=/usr/share/elastic-agent/certs/ca.pem
+#      - KIBANA_FLEET_CA=/usr/share/elastic-agent/certs/ca.pem
+      - KIBANA_FLEET_HOST=https://kibana:5601
+      - KIBANA_FLEET_USERNAME=${ELASTIC_USERNAME}
+      - KIBANA_FLEET_PASSWORD=${ELASTIC_PASSWORD}      
+      - FLEET_TOKEN_POLICY_NAME=Agent Collector policy
+    labels:
+      - "monitor1"
+    volumes:
+      - ./certificates/elastic/fleet:/usr/share/elastic-agent/certs
+#      - ./certificates/ca/ca.pem:/usr/share/elastic-agent/certs/ca.pem
+      - ./certificates/ca/ca.pem:/etc/ssl/certs/ca.pem
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - elastic-agent-data:/usr/share/elastic-agent
+    networks:
+      - elastic-net
+      - rabbitmq-net
+      - mongo-net
+
+networks:
+  rabbitmq-net:
+  mongo-net:
+  elastic-net:
+
+volumes:
+  rabbitmq-data:
+  mongo-data:
+  esdata01:
+  kibanadata:
+  fleet-server-data:
+  elastic-agent-data:

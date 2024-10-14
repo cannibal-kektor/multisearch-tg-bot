@@ -1,0 +1,11 @@
+#**/src/main/**/target/
+#**/src/test/**/target/
+app/target
+app/processor/target/
+app/bot/target/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr

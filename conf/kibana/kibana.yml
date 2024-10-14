@@ -1,0 +1,158 @@
+# Default Kibana configuration for docker target
+server:
+  host: "0.0.0.0"
+#server.port: ${KIBANA_PORT}
+#server.protocol: http2
+  name: "kibana"
+  shutdownTimeout: "5s"
+  ssl:
+    enabled: true
+    certificate : config/certs/kibana.pem
+    key: config/certs/kibana.key
+    certificateAuthorities: config/certs/ca.pem
+elasticsearch:
+  hosts: [ "https://elastic01:9200" ]
+  username: ${KIBANA_USERNAME}
+  password: ${KIBANA_PASSWORD}
+  ssl:
+    alwaysPresentCertificate: true
+    certificate : config/certs/kibana.pem
+    key: config/certs/kibana.key
+    certificateAuthorities: config/certs/ca.pem
+    verificationMode: full
+xpack.fleet.agents.enabled: true
+#not nessasary
+xpack.fleet.agents.fleet_server.hosts:
+  - "https://fleet-server:8220"
+xpack.fleet.packages:
+  - name: fleet_server
+    version: latest
+  - name: docker
+    version: latest
+  - name: rabbitmq
+    version: latest  
+  - name: elasticsearch
+    version: latest
+  - name: mongodb
+    version: latest
+  - name: kibana
+    version: latest  
+  - name: elastic_agent
+    version: latest
+xpack.fleet.agentPolicies:
+  - name: Fleet Server policy
+    id: fleet-server-policy
+    namespace: default
+    monitoring_enabled: ['logs', 'metrics']
+    package_policies:
+      - name: Fleet Server
+        package:
+          name: fleet_server
+  - name: Agent Collector policy
+    id: agent-collector-policy
+    namespace: default
+    monitoring_enabled: ['logs', 'metrics']
+    package_policies:
+      - name: RabbitMq
+        package:
+          name: rabbitmq
+        id: rabbitmq-preconfigured-policy
+        inputs:
+          rabbitmq-logfile:
+            enabled: false
+          rabbitmq-rabbitmq/metrics:
+            enabled: true
+            vars:
+              hosts:
+                - "https://rabbit01:15671"
+              username: ${RABBITMQ_USER}
+              password: ${RABBITMQ_PASSWORD}
+      - name: Elasticsearch
+        package:
+          name: elasticsearch
+        id: elastic-preconfigured-policy
+        inputs:
+          elasticsearch-logfile:
+            enabled: false
+          elasticsearch-elasticsearch/metrics:
+            enabled: true
+            vars:
+              hosts:
+                - "https://elastic01:9200"
+              username: ${KIBANA_USERNAME}
+              password: ${KIBANA_PASSWORD}
+              scope: node
+              leaderelection: false
+#              ssl: "certificate_authorities: [\"/usr/share/elastic-agent/certs/ca.pem\"]"
+      - name: Mongo
+        package:
+          name: mongodb
+        id: mongo-preconfigured-policy
+        inputs:
+          mongodb-logfile:
+            enabled: false
+          mongodb-mongodb/metrics:
+            enabled: true
+            vars:
+              hosts:
+                - "mongodb://mongo01:27017/authSource=$external?authMechanism=MONGODB-X509&replicaSet=rs0&tls=true&tlsCertificateKeyFile=/usr/share/elastic-agent/certs/mongoAgentCombined.pem"
+#                - "mongodb://mongo01:27017/authSource=$external?authMechanism=MONGODB-X509&replicaSet=rs0&tls=true&tlsCAFile=/usr/share/elastic-agent/certs/ca.pem&tlsCertificateKeyFile=/usr/share/elastic-agent/certs/mongoAgentCombined.pem"
+              #Remove below (already specified in connect string)?
+              #'[ssl.enabled]': true
+              #'[ssl.verification_mode]': "full"
+              #'[ssl.certificate_authorities]':
+              #  - "/usr/share/elastic-agent/certs/ca.pem"
+              #'[ssl.certificate]': "/usr/share/elastic-agent/certs/mongoAgent.pem"
+              #'[ssl.key]': "/usr/share/elastic-agent/certs/mongoAgent.key"
+      - name: Kibana
+        package:
+          name: kibana
+        id: kibana-preconfigured-policy
+        inputs:
+          kibana-logfile:
+            enabled: false
+          kibana-http/metrics:
+            enabled: true
+            vars:
+              hosts:
+                - "https://kibana:5601"
+              username: ${KIBANA_USERNAME}
+              password: ${KIBANA_PASSWORD}
+#              ssl: "certificate_authorities: [\"/usr/share/elastic-agent/certs/ca.pem\"]"
+          kibana-kibana/metrics:
+            enabled: true
+            vars:
+              hosts:
+                - "https://kibana:5601"
+              username: ${KIBANA_USERNAME}
+              password: ${KIBANA_PASSWORD}
+#              ssl: "certificate_authorities: [\"/usr/share/elastic-agent/certs/ca.pem\"]"
+      - name: Docker
+        package:
+          name: docker
+        id: docker-preconfigured-policy
+        inputs:
+          docker-filestream:
+            enabled: true
+            streams:
+              '[docker.container_logs]':
+                enabled: true
+                vars:
+                  paths:
+                    - "/var/lib/docker/containers/${docker.container.id}/*-json.log"
+                  condition: "hasKey(${docker.container.labels}, 'monitor')"
+                  containerParserStream: "all"
+      - name: Elastic Agent
+        package:
+          name: elastic_agent
+xpack.fleet.outputs:
+  - id: my-elastic-output
+    name: preconfigured elastic output
+    type:  elasticsearch
+    hosts: ["https://elastic01:9200"]
+    is_default: true
+    is_default_monitoring: true
+#    config.ssl.certificate_authorities:
+#      - /usr/share/elastic-agent/certs/ca.pem
+monitoring.ui.container.elasticsearch.enabled: true
+xpack.encryptedSavedObjects.encryptionKey: "random-string-above-32-or-more-characters"

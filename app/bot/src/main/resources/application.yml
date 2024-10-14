@@ -1,0 +1,158 @@
+#debug: true
+bot:
+  username: ${BOT_USERNAME}
+  token: ${BOT_TOKEN}
+  creator-id: ${BOT_CREATOR}
+app-config:
+  rabbit:
+    tgActionRoutingKey: tgAction
+    tgActionQueueName:  container.hostname.queue
+    tgActionExchangeName: tgAction.exchange
+
+spring:
+  application:
+    name: FastSearchTelegramBot
+  data:
+    mongodb:
+#      uri: mongodb://mongodb:27017/?directConnection=true&tls=true&tlsCAFile=/rootca.pem&tlsCertificateKeyFile=E%3A%5Ctest%5Crabbit%5Cconf%5Cmongo%5Ccert%5Cmongoclient.pem&authMechanism=MONGODB-X509&authSource=%24external
+
+      host: mongo01
+      port: 27017
+      database: testDB
+#      authentication-database: admin
+#      authentication-database: $external
+#      username: testUser
+#      password: testPassword
+      replica-set-name: rs0
+      ssl:
+        enabled: true
+        bundle: mongo-client
+      repositories:
+        type: none
+  #      auto-index-creation: true
+  #  server: port=8081
+
+  #--TaskExecutionAutoConfiguration------------------------
+  task:
+    execution:
+      threadNamePrefix: Fastsearch-Bot-Thread-
+      pool:
+        core-size: 4
+        max-size: 10
+        allow-core-thread-timeout: true
+        keep-alive: PT30S
+        queue-capacity: 200
+      shutdown:
+        await-termination: true
+        await-termination-period: PT30S  #60 sec example - P3DT5H40M30S = 3Days, 5Hours, 40 Minutes and 30 Seconds
+
+    #-----TaskSchedulingAutoConfiguration-----------------------
+  scheduling:
+    threadNamePrefix: Bot-Scheduling-caching-Thread-
+    pool:
+      size: 1
+    shutdown:
+      await-termination: true
+      await-termination-period: PT10S
+  # -----------------------------------------------------
+
+  #--------------------------------------------------------------------------
+  #MessageSourceAutoConfiguration------------
+  messages:
+    basename: i8n/messages
+    use-code-as-default-message: true
+    fallback-to-system-locale: false
+    encoding: UTF-8
+    always-use-message-format: false
+    cache-duration: -1
+  #-------------------------------------------
+
+  rabbitmq:
+#    addresses: localhost:5672
+#    addresses: amqps://guest:guest@localhost:5671
+    addresses: rabbit01:5671
+#    address-shuffle-mode: inorder
+#    host: localhost
+#    port: 5672
+    username: telegramApp
+#    password: guest
+
+#    publisher-confirm-type: none(def)
+#    publisher-returns: false(def)
+
+#    virtual-host:
+#    connection-timeout: ?
+#    requested-heartbeat: ?
+#    cache:
+#      connection:
+#        mode: connection
+    #        size: установить в кол-во нод
+    template:
+      exchange: ${app-config.rabbit.tgActionExchangeName}
+#      routing-key: ${app-config.rabbit.tgActionRoutingKey}
+      retry:
+        enabled: true
+        max-attempts: 3
+        initial-interval: 1000ms
+#        maxInterval: 3000ms
+        multiplier: 2
+
+    ssl:
+      enabled: true
+      bundle: rabbit-client
+      algorithm: TLSv1.3
+
+
+#  logging:
+#    level:
+#      tracer: TRACE
+#      org:
+#        springframework:
+#          jdbc:
+#            core:
+#              #          core: TRACE
+#              StatementCreatorUtils: TRACE
+#              JdbcTemplate: TRACE
+#
+#          data:
+#            elasticsearch:
+#              client:
+#                WIRE: TRACE
+
+  #---SslAutoConfiguration--------------------------
+  ssl:
+    bundle:
+      #      jks.*:
+      pem:
+        rabbit-client:
+          keystore:
+            certificate: "classpath:rabbit/telegramAppRabbit.pem"
+            private-key: "classpath:rabbit/telegramAppRabbit.key"
+          #            private-key-password:
+          truststore:
+            certificate: "classpath:ca/ca.pem"
+  #      watch:
+  #        file:
+  #          quiet-period:
+        mongo-client:
+          truststore:
+            certificate: "classpath:ca/ca.pem"
+          #      watch:
+          #        file:
+          #          quiet-period:
+          keystore:
+            certificate: "classpath:mongo/telegramAppMongo.pem"
+            private-key: "classpath:mongo/telegramAppMongo.key"
+
+logging:
+  level:
+    tracer: TRACE
+    org:
+      springframework:
+        data:
+          mongodb:
+            core:
+              MongoTemplate: DEBUG
+          elasticsearch:
+            client:
+              WIRE: TRACE
