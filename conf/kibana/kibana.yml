@@ -30,11 +30,11 @@ xpack.fleet.packages:
   - name: docker
     version: latest
   - name: rabbitmq
-    version: latest  
+    version: 1.16.0
   - name: elasticsearch
     version: latest
   - name: mongodb
-    version: latest
+    version: 1.16.0
   - name: kibana
     version: latest  
   - name: elastic_agent
@@ -141,6 +141,7 @@ xpack.fleet.agentPolicies:
                   paths:
                     - "/var/lib/docker/containers/${docker.container.id}/*-json.log"
                   condition: "hasKey(${docker.container.labels}, 'monitor')"
+#                  additionalParsersConfig: " - ndjson:\n     overwrite_keys: true\n     expand_keys: true\n     add_error_key: true\n     ignore_decoding_error: true\n# - multiline:\n#     type: pattern\n#     pattern: '^\\['\n#     negate: true\n#     match: after\n"
                   containerParserStream: "all"
       - name: Elastic Agent
         package:
@@ -156,3 +157,11 @@ xpack.fleet.outputs:
 #      - /usr/share/elastic-agent/certs/ca.pem
 monitoring.ui.container.elasticsearch.enabled: true
 xpack.encryptedSavedObjects.encryptionKey: "random-string-above-32-or-more-characters"
+logging:
+  appenders:
+    json-layout:
+      type: console
+      layout:
+        type: json
+  root:
+    appenders: [json-layout]

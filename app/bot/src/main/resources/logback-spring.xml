@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--    <property name="base.log.dir" value="logs"/>-->
+    <!--    <property name="LOG_FILE" value="${base.log.dir}/log-structura"/>-->
+    <!--    <springProperty name="SERVICE_NAME" source="spring.application.name"/>-->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="co/elastic/logging/logback/boot/ecs-console-appender.xml" />
+
+    <!--    <appender name="ECS_JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">-->
+    <!--        &lt;!&ndash;        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">&ndash;&gt;-->
+    <!--        &lt;!&ndash;            <level>${CONSOLE_LOG_THRESHOLD}</level>&ndash;&gt;-->
+    <!--        &lt;!&ndash;        </filter>&ndash;&gt;-->
+    <!--        <encoder class="co.elastic.logging.logback.EcsEncoder">-->
+    <!--            <serviceName>${SERVICE_NAME:-spring-boot-application}</serviceName>-->
+    <!--        </encoder>-->
+    <!--    </appender>-->
+
+
+    <root level="debug">
+        <appender-ref ref="ECS_JSON_CONSOLE"/>
+        <!--            <appender-ref ref="ECS_FILE"/>-->
+    </root>
+
+    <!--    <springProfile name="dev">-->
+    <!--        <root level="debug">-->
+    <!--            <appender-ref ref="ECS_STDOUT"/>-->
+    <!--&lt;!&ndash;            <appender-ref ref="ECS_FILE"/>&ndash;&gt;-->
+    <!--        </root>-->
+    <!--    </springProfile>-->
+    <!--    <springProfile name="prod">-->
+    <!--        <root level="debug">-->
+    <!--            <appender-ref ref="STDOUT"/>-->
+    <!--&lt;!&ndash;            <appender-ref ref="ECS_FILE"/>&ndash;&gt;-->
+    <!--        </root>-->
+    <!--    </springProfile>-->
+</configuration>

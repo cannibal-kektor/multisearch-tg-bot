@@ -1,4 +1,4 @@
-#debug: true
+debug: true
 bot:
   username: ${BOT_USERNAME}
   token: ${BOT_TOKEN}
@@ -12,7 +12,8 @@ app-config:
 
 spring:
   application:
-    name: FastSearchCommandProcessor
+    name: multisearch-processor
+  main.banner-mode: off
   data:
     mongodb:
       host: mongo01

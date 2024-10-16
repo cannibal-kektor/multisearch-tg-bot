@@ -12,7 +12,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class MultiSearchCommandProcessorApplication {
 
     public static void main(String[] args) {
-        System.out.println(System.getenv());
         new SpringApplicationBuilder(MultiSearchCommandProcessorApplication.class)
                 .web(WebApplicationType.NONE)
                 .run(args);

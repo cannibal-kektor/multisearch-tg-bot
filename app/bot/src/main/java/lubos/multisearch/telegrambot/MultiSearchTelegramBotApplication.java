@@ -13,7 +13,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class MultiSearchTelegramBotApplication {
 
     public static void main(String[] args) {
-        System.out.println(System.getenv());
         new SpringApplicationBuilder(MultiSearchTelegramBotApplication.class)
                 .web(WebApplicationType.NONE)
                 .run(args);

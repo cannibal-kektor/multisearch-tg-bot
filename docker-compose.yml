@@ -1,7 +1,7 @@
 name: multisearch
 services:
 
-  telegramBot:
+  multisearchBot:
     build:
       context: ./app
       no_cache: true
@@ -12,8 +12,8 @@ services:
       - elastic01
       - elastic-agent
     image: multisearch-telegram-bot
-    hostname: telegramBot
-    container_name: telegramBot
+    hostname: multisearchBot
+    container_name: multisearchBot
     environment:
       - BOT_USERNAME=${BOT_USERNAME}
       - BOT_TOKEN=${BOT_TOKEN}
@@ -62,9 +62,9 @@ services:
     hostname: rabbit01
     container_name: rabbit01
     volumes:
-      - ./conf/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-      - ./conf/enabled_plugins:/etc/rabbitmq/enabled_plugins
-      - ./conf/setup_definition.json:/etc/rabbitmq/conf/setup_definition.json
+      - ./conf/rabbit/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./conf/rabbit/enabled_plugins:/etc/rabbitmq/enabled_plugins
+      - ./conf/rabbit/setup_definition.json:/etc/rabbitmq/conf/setup_definition.json
       - ./certificates/rabbit/server:/etc/rabbitmq/conf/certs
       - ./certificates/ca/ca.pem:/etc/rabbitmq/conf/certs/ca.pem
       - rabbitmq-data:/var/lib/rabbitmq/

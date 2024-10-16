@@ -1,4 +1,4 @@
-#debug: true
+debug: true
 bot:
   username: ${BOT_USERNAME}
   token: ${BOT_TOKEN}
@@ -11,7 +11,8 @@ app-config:
 
 spring:
   application:
-    name: FastSearchTelegramBot
+    name: multisearch-bot
+  main.banner-mode: off
   data:
     mongodb:
 #      uri: mongodb://mongodb:27017/?directConnection=true&tls=true&tlsCAFile=/rootca.pem&tlsCertificateKeyFile=E%3A%5Ctest%5Crabbit%5Cconf%5Cmongo%5Ccert%5Cmongoclient.pem&authMechanism=MONGODB-X509&authSource=%24external
