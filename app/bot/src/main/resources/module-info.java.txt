@@ -6,6 +6,7 @@ open module telegramBot {
     requires spring.beans;
     requires spring.context;
     requires spring.tx;
+    requires org.aspectj.weaver;
 
     requires spring.data.mongodb;
     requires org.mongodb.driver.core;
@@ -23,4 +24,6 @@ open module telegramBot {
     requires com.google.common;
 
     requires jakarta.annotation;
+    requires org.slf4j;
+
 }

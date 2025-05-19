@@ -46,7 +46,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    @PostConstruct
+//    @PostConstruct
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void refresh() {
         bannedIds = userRepository.findBannedIds();

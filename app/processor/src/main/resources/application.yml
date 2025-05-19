@@ -3,12 +3,10 @@ bot:
   username: ${BOT_USERNAME}
   token: ${BOT_TOKEN}
   creator-id: ${BOT_CREATOR}
-
-app-config:
+app:
   rabbit:
-    tgActionRoutingKey: tgAction
-    tgActionQueueName:  container.hostname.queue
     tgActionExchangeName: tgAction.exchange
+  auth-path: ${AUTH_PATH}
 
 spring:
   application:
@@ -19,6 +17,7 @@ spring:
       host: mongo01
       port: 27017
       database: testDB
+#      auto-index-creation: true
 #      authentication-database: admin
 #      username: testUser
 #      password: testPassword
@@ -53,29 +52,29 @@ spring:
       pem:
         elastic-client:
           truststore:
-            certificate: "classpath:ca/ca.pem"
+            certificate: "file:${app.auth-path}/ca.pem"
           keystore:
-            certificate: "classpath:elastic/cert/telegramAppElastic.pem"
-            private-key: "classpath:elastic/cert/telegramAppElastic.key"
+            certificate: "file:${app.auth-path}/tgAppElastic.pem"
+            private-key: "file:${app.auth-path}/tgAppElastic.key"
         rabbit-client:
           keystore:
-            certificate: "classpath:rabbit/telegramAppRabbit.pem"
-            private-key: "classpath:rabbit/telegramAppRabbit.key"
+            certificate: "file:${app.auth-path}/tgAppRabbit.pem"
+            private-key: "file:${app.auth-path}/tgAppRabbit.key"
           #            private-key-password:
           truststore:
-            certificate: "classpath:ca/ca.pem"
+            certificate: "file:${app.auth-path}/ca.pem"
   #      watch:
   #        file:
   #          quiet-period:
         mongo-client:
           truststore:
-            certificate: "classpath:ca/ca.pem"
+            certificate: "file:${app.auth-path}/ca.pem"
           #      watch:
           #        file:
           #          quiet-period:
           keystore:
-            certificate: "classpath:mongo/telegramAppMongo.pem"
-            private-key: "classpath:mongo/telegramAppMongo.key"
+            certificate: "file:${app.auth-path}/tgAppMongo.pem"
+            private-key: "file:${app.auth-path}/tgAppMongo.key"
 
   #--TaskExecutionAutoConfiguration------------------------
   task:
@@ -111,7 +110,7 @@ spring:
     always-use-message-format: false
     cache-duration: -1
   #-------------------------------------------
-
+  #--------------------------------------------------------------------------
   rabbitmq:
     addresses: rabbit01:5671
 #    address-shuffle-mode: inorder
@@ -126,36 +125,34 @@ spring:
 #        checkout-timeout:
 #      connection:
 #        mode: connection
-
 #        size: установить в кол-во нод
 #    publisher-confirm-type: none(def)
-
 #    publisher-returns: false(def)
 #    connection-timeout: ?
 #    requested-heartbeat: ?
 #    max-inbound-message-body-size:
 #    requested-channel-max:
-
     listener:
       type: direct
       direct:
 #        acknowledge-mode: auto
 #        auto-startup: true
-#        default-requeue-rejected: true
+        default-requeue-rejected: false
 #        missing-queues-fatal: true
-        prefetch: 2
-        consumers-per-queue: 2
-        retry:
-          enabled: true
-          initial-interval: 1000ms
-          max-attempts: 3
+        prefetch: 3
+        consumers-per-queue: 3
+#        retry:
+#          enabled: true
+#          initial-interval: 400ms
+#          max-attempts: 3
 #          max-interval: 10000ms
-          multiplier: 2
-          stateless: true
+#          multiplier: 2
+#          stateless: true
     ssl:
       enabled: true
       bundle: rabbit-client
       algorithm: TLSv1.3
+  #-------------------------------------------
 
 #  logging:
 #    level:

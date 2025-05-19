@@ -21,7 +21,9 @@ public class TelegramActionListener {
                 commandsProcessorsMap.put(commandProcessor.getCommand(), commandProcessor));
     }
 
-    @RabbitListener(queues = "${app-config.rabbit.tgActionQueueName}", errorHandler = "rabbitErrorHandler")
+//    @RabbitListener(queues = "${app-config.rabbit.tgActionQueueName}", errorHandler = "rabbitErrorHandler")
+    @RabbitListener(queues = "#{tgActionQueue}", errorHandler = "rabbitErrorHandler")
+//    @RabbitListener(queues = "#{tgActionQueue}")
     void testConsume(@Payload @Valid ActionMessage actionMessage) {
         var commandProcessor = commandsProcessorsMap.get(actionMessage.command());
         commandProcessor.processCommand(actionMessage);

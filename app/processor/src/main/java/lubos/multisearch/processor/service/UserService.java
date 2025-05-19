@@ -148,7 +148,6 @@ public class UserService {
                 .map(userMapper::toDTO);
     }
 
-
     @Transactional(readOnly = true)
     public Page<UserDTO> listUsers(Pageable pageable) {
         long totalUsers = userRepository.count();

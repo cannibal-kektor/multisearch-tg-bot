@@ -118,14 +118,6 @@ if curl -s -X PUT --cert config/certs/elastic01.pem --key config/certs/elastic01
       }
     },
     {
-      "pipeline":{
-        "name":"logs-mongodb.log-1.16.0",
-        "ignore_missing_pipeline":false,
-        "if":"ctx.container?.name?.indexOf(\"mongo\") == 0",
-        "description":"Pipeline for mongo logs"
-      }
-    },
-    {
     "set": {
       "field": "event.dataset",
       "value": "docker.container_logs"

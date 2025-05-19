@@ -1,7 +1,8 @@
 package lubos.multisearch.telegrambot.bot.commands;
 
 
-import lubos.multisearch.telegrambot.utils.TelegramHelperUtils;
+import lubos.multisearch.telegrambot.logging.LogHelper;
+import lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils;
 import lubos.multisearch.telegrambot.conf.BotInfo;
 import lombok.experimental.FieldDefaults;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -22,6 +23,8 @@ import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNullElse;
 import static lombok.AccessLevel.PRIVATE;
+import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.BOT_TYPING;
+import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.userLocale;
 import static org.telegram.telegrambots.abilitybots.api.objects.Ability.builder;
 import static org.telegram.telegrambots.abilitybots.api.objects.Flag.REPLY;
 import static org.telegram.telegrambots.abilitybots.api.objects.Flag.TEXT;
@@ -31,14 +34,6 @@ import static org.telegram.telegrambots.abilitybots.api.objects.MessageContext.n
 @Component
 public class TelegramCommandBuilder {
 
-    static Consumer<MessageContext> BOT_TYPING =
-            ctx -> {
-                var action = SendChatAction.builder()
-                        .action(ActionType.TYPING.toString())
-                        .chatId(ctx.chatId())
-                        .build();
-                ctx.bot().getSilent().execute(action);
-            };
     static Predicate<MessageContext> ALWAYS_REPLY = ctx -> false;
     static Predicate<MessageContext> HAS_INPUT = ctx -> TEXT.test(ctx.update()) && ctx.arguments().length > 0;
     static Predicate<Update> IS_REPLY_TO_BOT;
@@ -46,9 +41,10 @@ public class TelegramCommandBuilder {
     final BotInfo botInfo;
     final RabbitTemplate rabbitTemplate;
     final MessageSource messageSource;
+    final LogHelper logHelper;
 
     public TelegramCommandBuilder(BotInfo botInfo, RabbitTemplate rabbitTemplate,
-                                  MessageSource messageSource) {
+                                  MessageSource messageSource, LogHelper logHelper) {
         this.botInfo = botInfo;
         this.rabbitTemplate = rabbitTemplate;
         this.messageSource = messageSource;
@@ -56,6 +52,7 @@ public class TelegramCommandBuilder {
                 .getReplyToMessage()
                 .getFrom()
                 .getUserName().equalsIgnoreCase(botInfo.username());
+        this.logHelper = logHelper;
     }
 
     public Builder newCommand() {
@@ -64,8 +61,8 @@ public class TelegramCommandBuilder {
 
     @FieldDefaults(level = PRIVATE)
     public static class Builder {
-        RabbitTemplate rabbitTemplate;
-        MessageSource messageSource;
+        final RabbitTemplate rabbitTemplate;
+        final MessageSource messageSource;
         Command command;
         String commandInfo;
         Privacy privacy;
@@ -153,7 +150,7 @@ public class TelegramCommandBuilder {
                     if (actionPredicate.test(ctx)) {
                         commandHandler.handleCommand(ctx, inputPattern, CommandsConstants.MESSAGE);
                     } else {
-                        ctx.bot().getSilent().forceReply(message(specifyStr, TelegramHelperUtils.userLocale(ctx)), ctx.chatId());
+                        ctx.bot().getSilent().forceReply(message(specifyStr, userLocale(ctx)), ctx.chatId());
                     }
                 };
                 replies.add(Reply.of((bot, upd) -> {
@@ -162,18 +159,15 @@ public class TelegramCommandBuilder {
                     commandHandler.handleCommand(ctx, inputPattern, CommandsConstants.REPLY_MESSAGE);
                 }, REPLY, IS_REPLY_TO_BOT, replyPredicate, isReplyToMessage()));
             } else {
-                action = ctx -> {
-                    commandHandler.handleCommand(ctx, inputPattern, CommandsConstants.MESSAGE);
-                };
+                action = ctx -> commandHandler.handleCommand(ctx, inputPattern, CommandsConstants.MESSAGE);
             }
 
             if (withMenuCallback) {
                 Pattern menuCallbackPattern = Pattern.compile("^menu " + commandName + "$");
                 if (withReply) {
-                    replies.add(Reply.of((bot, upd) -> {
-                        bot.getSilent().forceReply(message(specifyStr, TelegramHelperUtils.userLocale(upd)),
-                                upd.getCallbackQuery().getMessage().getChatId());
-                    }, callbackMatchesPattern(menuCallbackPattern)));
+                    replies.add(Reply.of((bot, upd) ->
+                            bot.getSilent().forceReply(message(specifyStr, userLocale(upd)),
+                            upd.getCallbackQuery().getMessage().getChatId()), callbackMatchesPattern(menuCallbackPattern)));
                 } else {
                     replies.add(constructCallbackReply(menuCallbackPattern, CommandsConstants.MENU_CALLBACK));
                 }
@@ -222,7 +216,7 @@ public class TelegramCommandBuilder {
         Predicate<Update> isReplyToMessage() {
             return upd -> {
                 Message reply = upd.getMessage().getReplyToMessage();
-                String message = message(specifyStr, TelegramHelperUtils.userLocale(upd));
+                String message = message(specifyStr, userLocale(upd));
                 return reply.hasText()
                         && reply.getText().equals(message);
             };

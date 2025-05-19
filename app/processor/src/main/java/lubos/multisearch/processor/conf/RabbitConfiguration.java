@@ -8,13 +8,9 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.SimplePropertyValueConnectionNameStrategy;
 import org.springframework.amqp.rabbit.listener.DirectMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar;
-import org.springframework.amqp.rabbit.retry.MessageRecoverer;
-import org.springframework.amqp.rabbit.retry.RejectAndDontRequeueRecoverer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.amqp.CachingConnectionFactoryConfigurer;
-import org.springframework.boot.autoconfigure.amqp.RabbitConnectionDetails;
-import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
+import org.springframework.boot.autoconfigure.amqp.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -26,9 +22,7 @@ public class RabbitConfiguration implements RabbitListenerConfigurer {
 
     private final LocalValidatorFactoryBean validator;
 
-    @Value("${app-config.rabbit.tgActionQueueName}")
-    private String tgActionQueueName;
-    @Value("${app-config.rabbit.tgActionExchangeName}")
+    @Value("${app.rabbit.tgActionExchangeName}")
     private String tgActionExchangeName;
 
 
@@ -36,16 +30,34 @@ public class RabbitConfiguration implements RabbitListenerConfigurer {
         this.validator = validator;
     }
 
+//    @Bean
+//    Queue tgActionQueue() {
+//        return QueueBuilder.nonDurable(tgActionQueueName)
+//                .exclusive()
+//                .expires(30000)
+//                .ttl(20000)
+//                .maxLength(200L)
+//                .overflow(QueueBuilder.Overflow.rejectPublish)
+//                .leaderLocator(QueueBuilder.LeaderLocator.minLeaders)
+
+    /// /                .singleActiveConsumer() ?
+    /// /                .quorum()
+//                .build();
+//    }
     @Bean
-    Queue tgActionQueue() {
-        return QueueBuilder.nonDurable(tgActionQueueName)
-                .expires(30000)
+    public Queue tgActionQueue() {
+        return QueueBuilder
+                .nonDurable()
+                .exclusive()
+                .autoDelete()
+//                .expires(30000)
                 .ttl(20000)
                 .maxLength(200L)
                 .overflow(QueueBuilder.Overflow.rejectPublish)
-                .leaderLocator(QueueBuilder.LeaderLocator.minLeaders)
+//                .leaderLocator(QueueBuilder.LeaderLocator.minLeaders)
+                .leaderLocator(QueueBuilder.LeaderLocator.clientLocal)
 //                .singleActiveConsumer() ?
-//                .quorum()
+//                .quorum() no sense for exclusive queue
                 .build();
     }
 
@@ -65,21 +77,34 @@ public class RabbitConfiguration implements RabbitListenerConfigurer {
     }
 
     @Bean
-    ContainerCustomizer<DirectMessageListenerContainer> configure() {
+    ContainerCustomizer<DirectMessageListenerContainer> configure(ThreadPoolTaskExecutor taskExecutor) {
         return container -> {
-            container.setGlobalQos(true); //see globalQos in consp
             container.setMismatchedQueuesFatal(true);
-//            container.setTaskExecutor();
+            container.setTaskExecutor(taskExecutor);
+//            container.setGlobalQos(true); //see globalQos in consp
+//            container.setTaskScheduler();
         };
     }
 
 
     @Bean
     public Jackson2JsonMessageConverter jsonConverter() {
-        var converter = new Jackson2JsonMessageConverter();
-        //для reply
-        converter.setCreateMessageIds(true);
-        return converter;
+        return new Jackson2JsonMessageConverter();
+    }
+
+
+    //альтернатива конфигурации CachingConnectionFactory- RabbitConnectionFactoryBean and Configuring SSL стр217
+
+    @Bean
+    CachingConnectionFactoryConfigurer rabbitConnectionFactoryConfigurer(RabbitConnectionDetails connectionDetails, RabbitProperties properties, ThreadPoolTaskExecutor taskExecutor) {
+        return new CachingConnectionFactoryConfigurer(properties, connectionDetails) {
+            @Override
+            public void configure(CachingConnectionFactory connectionFactory, RabbitProperties rabbitProperties) {
+                super.configure(connectionFactory, rabbitProperties);
+                connectionFactory.setExecutor(taskExecutor);
+                connectionFactory.setConnectionNameStrategy(cns());
+            }
+        };
     }
 
     @Bean
@@ -87,32 +112,45 @@ public class RabbitConfiguration implements RabbitListenerConfigurer {
         return new SimplePropertyValueConnectionNameStrategy("spring.application.name");
     }
 
-
-    //альтернатива конфигурации CachingConnectionFactory- RabbitConnectionFactoryBean and Configuring SSL стр217
-    @Bean
-    CachingConnectionFactoryConfigurer rabbitConnectionFactoryConfigurer(RabbitConnectionDetails connectionDetails,
-                                                                         RabbitProperties properties, ThreadPoolTaskExecutor taskExecutor) {
-        var configurer = new CachingConnectionFactoryConfigurer(properties, connectionDetails) {
-            @Override
-            public void configure(CachingConnectionFactory connectionFactory, RabbitProperties rabbitProperties) {
-                super.configure(connectionFactory, rabbitProperties);
-                connectionFactory.setExecutor(taskExecutor);
-            }
-        };
-        configurer.setConnectionNameStrategy(cns());
-        return configurer;
-    }
-
-
     @Override
     public void configureRabbitListeners(RabbitListenerEndpointRegistrar registrar) {
         registrar.setValidator(validator);
     }
 
-    @Bean
-    MessageRecoverer messageRecoverer() {
-        return new RejectAndDontRequeueRecoverer();
-    }
+//    @Bean
+//    MessageRecoverer messageRecoverer() {
+//        return new RejectAndDontRequeueRecoverer();
+//    }
+
+//    @Bean
+//    RabbitListenerErrorHandler rabbitErrorHandler() {
+//        return (amqpMessage, message, ex) -> {
+//            var cause = ex.getCause();
+//            var wrapped = cause instanceof ApplicationException e ? e : new ServerProcessingException(cause);
+//            wrapped.setActionMessage((ActionMessage) message.getPayload());
+//            throw new ListenerExecutionFailedException(cause.getMessage(), wrapped, amqpMessage);
+//        };
+//    }
+//
+//    @Bean
+//    MessageRecoverer messageRecoverer(TelegramSender sender, TelegramKeyboard keyboard, MessageSource messageSource) {
+//        return (message, cause) -> {
+//            var appException = (ApplicationException) cause.getCause();
+//            var actionMessage = appException.getActionMessage();
+//            var locale = userLocale(actionMessage);
+//            var msg = appException.getLocalizedMessage(messageSource, locale);
+//            sender.send(actionMessage.chatId(), msg, keyboard.commandsKeyboard(actionMessage.user().getId(), locale));
+//            throw new AmqpRejectAndDontRequeueException(appException);
+//        };
+//    }
+//    @Bean
+//    RetryOperationsInterceptor interceptor() {
+//        return RetryInterceptorBuilder.stateless()
+//                .maxAttempts(5)
+//                .retryPolicy()
+//                .recoverer(new RepublishMessageRecoverer(amqpTemplate(), "something", "somethingelse"))
+//                .build();
+//    }
 
 //    @Bean
 //    public StatefulRetryOperationsInterceptor interceptor() {
@@ -124,7 +162,6 @@ public class RabbitConfiguration implements RabbitListenerConfigurer {
 //                    throw new AmqpRejectAndDontRequeueException(cause);
 //                })
 //                .build();
-
 //    }
 
 
@@ -159,7 +196,8 @@ public class RabbitConfiguration implements RabbitListenerConfigurer {
 //    @Bean //нужно вручную inject - походу только для reply case
 //    RecoveryCallback<TgActionDTO> recoveryCallback(){
 //        return context -> {
-////            context.
+
+    /// /            context.
 //            System.out.println("RECOVERY CALLBACK");
 //            throw new RuntimeException();
 //        };
@@ -181,5 +219,17 @@ public class RabbitConfiguration implements RabbitListenerConfigurer {
 //            rabbitTemplate.setMessageConverter(jsonConverter());
 //        };
 //    }
+
+
+//        @Bean
+//        RabbitTemplateCustomizer rabbitTemplateCustomizer() {
+//        return rabbitTemplate -> {
+//            rabbitTemplate.setAfterReceivePostProcessors(new GUnzipPostProcessor());
+//        };
+//    }
+
+
+//    @Bean Имя для консюмера
+//    ConsumerTagStrategy consumerTagStrategy()
 
 }

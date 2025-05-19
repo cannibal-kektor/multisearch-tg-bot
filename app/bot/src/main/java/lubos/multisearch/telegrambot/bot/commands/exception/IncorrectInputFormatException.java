@@ -1,6 +1,6 @@
 package lubos.multisearch.telegrambot.bot.commands.exception;
 
-import lubos.multisearch.telegrambot.utils.TelegramHelperUtils;
+import lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils;
 import org.springframework.context.MessageSource;
 
 import java.util.Locale;

@@ -32,6 +32,8 @@ open module botProcessor {
     requires lombok;
     requires org.mapstruct;
     requires com.google.common;
+    requires spring.retry;
+    requires com.rabbitmq.client;
 
 
 }

@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 import lubos.multisearch.processor.model.DocumentType;
 import lubos.multisearch.processor.model.validation.DocumentValidation;
 import org.hibernate.validator.constraints.URL;
@@ -47,6 +46,7 @@ public class SearchDocument {
     @Size(max = 200, groups = DocumentValidation.HTML.class)
     String htmlTitle;
 
+    //Мб я сделал DocumentReference а не DBRef тк на него можно CompoundIndex наложить (telegramId)?
     @NotNull
     @DocumentReference(lazy = true, lookup = "{ 'telegramId' : ?#{telegramId} }")
     TelegramUser user;

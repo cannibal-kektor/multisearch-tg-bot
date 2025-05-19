@@ -18,6 +18,7 @@
 
     <root level="debug">
         <appender-ref ref="ECS_JSON_CONSOLE"/>
+<!--        <appender-ref ref="ECS_STDOUT"/>-->
         <!--            <appender-ref ref="ECS_FILE"/>-->
     </root>
 

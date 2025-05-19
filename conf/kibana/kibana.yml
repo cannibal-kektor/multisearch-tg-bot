@@ -83,7 +83,7 @@ xpack.fleet.agentPolicies:
               password: ${KIBANA_PASSWORD}
               scope: node
               leaderelection: false
-#              ssl: "certificate_authorities: [\"/usr/share/elastic-agent/certs/ca.pem\"]"
+              ssl: "certificate_authorities: [\"/usr/share/elastic-agent/certs/ca.pem\"]"
       - name: Mongo
         package:
           name: mongodb
@@ -95,13 +95,14 @@ xpack.fleet.agentPolicies:
             enabled: true
             vars:
               hosts:
-                - "mongodb://mongo01:27017/authSource=$external?authMechanism=MONGODB-X509&replicaSet=rs0&tls=true&tlsCertificateKeyFile=/usr/share/elastic-agent/certs/mongoAgentCombined.pem"
+#                - "mongodb://mongo01:27017/authSource=$external?authMechanism=MONGODB-X509&replicaSet=rs0&tls=true&tlsCertificateKeyFile=/usr/share/elastic-agent/certs/mongoAgentCombined.pem"
+                - "mongodb://mongo01:27017/authSource=$external?authMechanism=MONGODB-X509&replicaSet=rs0&tls=true&tls=true&tlsCAFile=/usr/share/elastic-agent/certs/ca.pem&tlsCertificateKeyFile=/usr/share/elastic-agent/certs/agentCombined.pem"
 #                - "mongodb://mongo01:27017/authSource=$external?authMechanism=MONGODB-X509&replicaSet=rs0&tls=true&tlsCAFile=/usr/share/elastic-agent/certs/ca.pem&tlsCertificateKeyFile=/usr/share/elastic-agent/certs/mongoAgentCombined.pem"
               #Remove below (already specified in connect string)?
               #'[ssl.enabled]': true
               #'[ssl.verification_mode]': "full"
-              #'[ssl.certificate_authorities]':
-              #  - "/usr/share/elastic-agent/certs/ca.pem"
+#              '[ssl.certificate_authorities]':
+#                - "/usr/share/elastic-agent/certs/ca.pem"
               #'[ssl.certificate]': "/usr/share/elastic-agent/certs/mongoAgent.pem"
               #'[ssl.key]': "/usr/share/elastic-agent/certs/mongoAgent.key"
       - name: Kibana
@@ -118,7 +119,7 @@ xpack.fleet.agentPolicies:
                 - "https://kibana:5601"
               username: ${KIBANA_USERNAME}
               password: ${KIBANA_PASSWORD}
-#              ssl: "certificate_authorities: [\"/usr/share/elastic-agent/certs/ca.pem\"]"
+              ssl: "certificate_authorities: [\"/usr/share/elastic-agent/certs/ca.pem\"]"
           kibana-kibana/metrics:
             enabled: true
             vars:
@@ -126,7 +127,7 @@ xpack.fleet.agentPolicies:
                 - "https://kibana:5601"
               username: ${KIBANA_USERNAME}
               password: ${KIBANA_PASSWORD}
-#              ssl: "certificate_authorities: [\"/usr/share/elastic-agent/certs/ca.pem\"]"
+              ssl: "certificate_authorities: [\"/usr/share/elastic-agent/certs/ca.pem\"]"
       - name: Docker
         package:
           name: docker
@@ -153,8 +154,8 @@ xpack.fleet.outputs:
     hosts: ["https://elastic01:9200"]
     is_default: true
     is_default_monitoring: true
-#    config.ssl.certificate_authorities:
-#      - /usr/share/elastic-agent/certs/ca.pem
+    config.ssl.certificate_authorities:
+      - /usr/share/elastic-agent/certs/ca.pem
 monitoring.ui.container.elasticsearch.enabled: true
 xpack.encryptedSavedObjects.encryptionKey: "random-string-above-32-or-more-characters"
 logging:

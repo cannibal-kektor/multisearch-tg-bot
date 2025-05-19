@@ -1,11 +1,13 @@
 package lubos.multisearch.telegrambot.bot.commands;
 
+import lombok.extern.slf4j.Slf4j;
 import lubos.multisearch.telegrambot.dto.ActionMessage;
 import lubos.multisearch.telegrambot.bot.commands.exception.IncorrectInputFormatException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
+import lubos.multisearch.telegrambot.logging.LogHelper;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.MessageSource;
 import org.telegram.telegrambots.abilitybots.api.objects.Ability;
@@ -21,7 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static lubos.multisearch.telegrambot.utils.TelegramHelperUtils.*;
+import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.*;
 import static java.util.Collections.emptyMap;
 import static lombok.AccessLevel.PRIVATE;
 import static org.telegram.telegrambots.abilitybots.api.objects.Flag.CALLBACK_QUERY;
@@ -29,11 +31,13 @@ import static org.telegram.telegrambots.abilitybots.api.objects.Flag.CALLBACK_QU
 @Setter
 @Getter
 @Accessors(fluent = true, chain = true)
+@Slf4j
 @FieldDefaults(level = PRIVATE)
 public class TelegramCommand implements CommandHandler, ParametersExtractor, AbilityExtension {
 
     RabbitTemplate rabbitTemplate;
     MessageSource messageSource;
+    LogHelper logHelper;
 
     Command command;
     Ability ability;
@@ -45,6 +49,7 @@ public class TelegramCommand implements CommandHandler, ParametersExtractor, Abi
     @Override
     public void handleCommand(MessageContext ctx, Pattern inputPattern, String contextId) {
         try {
+//            logHelper
             var parameters = parametersExtractor.extractParameters(ctx.update(), inputPattern);
             var actionMessage = new ActionMessage(ctx.user(), command, ctx.chatId(), contextId, parameters);
             rabbitTemplate.convertAndSend(ctx.user().getId().toString(), actionMessage);

@@ -12,10 +12,8 @@ public class MongoConfiguration {
 
     @Bean
     MongoClientSettingsBuilderCustomizer mongoClientSettingsBuilderCustomizer() {
-        return clientSettingsBuilder -> {
-            clientSettingsBuilder
-                    .credential(MongoCredential.createMongoX509Credential());
-        };
+        return clientSettingsBuilder -> clientSettingsBuilder
+                .credential(MongoCredential.createMongoX509Credential());
     }
 
     @Bean
@@ -23,4 +21,21 @@ public class MongoConfiguration {
         return new MongoTransactionManager(dbFactory);
     }
 
+
+    //MONGO- УЖЕ ЕСТЬ КАКОЙ-ТО ВСТРОЕННЫЙ КОННЕКШЕН ПУЛ ДЛЯ КЛИЕНТА (НО НЕ НАСТРАИВАЕТСЯ ЧЕРЕЗ application.yml)
+//    @Bean
+//    MongoClientSettingsBuilderCustomizer mongoClientSettingsBuilderCustomizer(){
+//        return clientSettingsBuilder -> {
+//            clientSettingsBuilder.applyToConnectionPoolSettings(
+//                    builder -> {
+//                        builder.maxConnecting();
+//                        builder.maxSize();
+//                        builder.maxConnectionLifeTime()
+//                        builder.maxConnectionIdleTime()
+//                                ...
+//                        //https://www.mongodb.com/docs/manual/reference/connection-string/#connections-connection-options
+//                    }
+//            )
+//        }
+//    }
 }

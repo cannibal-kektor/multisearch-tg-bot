@@ -1,10 +1,18 @@
 package lubos.multisearch.processor.exception;
 
+import lombok.Getter;
+import lombok.Setter;
+import lubos.multisearch.processor.entrypoint.ActionMessage;
 import org.springframework.context.MessageSource;
 
 import java.util.Locale;
 
+
 public class ApplicationException extends RuntimeException {
+
+    @Getter
+    @Setter
+    private ActionMessage actionMessage;
 
     public ApplicationException(String message) {
         super(message);
@@ -14,7 +22,7 @@ public class ApplicationException extends RuntimeException {
         super(message, cause);
     }
 
-    public ApplicationException(Exception cause) {
+    public ApplicationException(Throwable cause) {
         super(cause);
     }
 
