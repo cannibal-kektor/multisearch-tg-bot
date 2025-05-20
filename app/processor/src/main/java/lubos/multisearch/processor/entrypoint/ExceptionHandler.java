@@ -38,7 +38,7 @@ public class ExceptionHandler implements RabbitListenerErrorHandler {
         };
         messageSource.getMessage(SERVER_ERROR_MESSAGE, null, locale);
         sender.send(actionMessage.chatId(), msg, keyboard.commandsKeyboard(actionMessage.user().getId(), locale));
-//        throw ex; if we do not throw retry not working?
+//        throw ex;if we do not throw retry not working
         return null;
     }
 }

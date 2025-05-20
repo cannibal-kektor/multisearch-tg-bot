@@ -2,22 +2,6 @@ name: multisearch
 
 services:
 
-  certificate-setup:
-    image: alpine/openssl:3.3.3
-    restart: "no"
-    volumes:
-      - ./conf/cert:/opt
-      -  ca-cert:/opt/ca
-      -  rabbit-cert:/opt/rabbit
-      -  mongo-cert:/opt/mongo
-      -  elastic-cert:/opt/elastic
-      -  kibana-cert:/opt/kibana
-      -  fleet-cert:/opt/fleet
-      -  agent-cert:/opt/agent
-      -  app-client-cert:/opt/app
-    working_dir: /opt
-    entrypoint: [ "sh", "/opt/initCertificates.sh"]
-
   multisearchBot:
     build:
       context: ./app
@@ -36,7 +20,7 @@ services:
         condition: service_healthy
       mongo01:
         condition: service_healthy
-      mongo-setup:
+      setup-mongo:
         condition: service_completed_successfully
       elastic-agent:
         condition: service_started
@@ -51,7 +35,7 @@ services:
     volumes:
       - app-client-cert:/${AUTH_PATH}:ro
     labels:
-      - "monitor"
+      - "monitor-ecs"
     networks:
       - rabbitmq-net
       - mongo-net
@@ -74,7 +58,7 @@ services:
         condition: service_healthy
       mongo01:
         condition: service_healthy
-      mongo-setup:
+      setup-mongo:
         condition: service_completed_successfully
       elastic-agent:
         condition: service_started
@@ -89,18 +73,36 @@ services:
     volumes:
       - app-client-cert:/${AUTH_PATH}:ro
     labels:
-      - "monitor"
+      - "monitor-ecs"
     networks:
       - rabbitmq-net
       - mongo-net
       - elastic-net
+
+  setup-certificate:
+    image: alpine/openssl:3.3.3
+    restart: "no"
+    volumes:
+      - ./conf/cert:/opt
+      -  ca-cert:/opt/ca
+      -  rabbit-cert:/opt/rabbit
+      -  mongo-cert:/opt/mongo
+      -  elastic-cert:/opt/elastic
+      -  kibana-cert:/opt/kibana
+      -  fleet-cert:/opt/fleet
+      -  agent-cert:/opt/agent
+      -  app-client-cert:/opt/app
+    working_dir: /opt
+    labels:
+      - "monitor-non-ecs"
+    entrypoint: [ "sh", "/opt/initCertificates.sh"]
 
   rabbit01:
     image: rabbitmq:3-management
     hostname: rabbit01
     container_name: rabbit01
     depends_on:
-      certificate-setup:
+      setup-certificate:
         condition: service_completed_successfully
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq/
@@ -109,7 +111,7 @@ services:
       - ./conf/rabbit/setup_definition.json:/etc/rabbitmq/conf/setup_definition.json:ro
       - rabbit-cert:/etc/rabbitmq/conf/certs:ro
     labels:
-      - "monitor"
+      - "monitor-non-ecs"
 #    entrypoint: [ "sleep", "1000000000"]
     healthcheck:
       test: rabbitmq-diagnostics -q ping
@@ -122,7 +124,7 @@ services:
     networks:
       - rabbitmq-net
 
-  mongo-setup:
+  setup-mongo:
     image: mongo
     depends_on:
       mongo01:
@@ -132,7 +134,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     labels:
-      - "monitor1"
+      - "monitor-non-ecs"
     volumes:
       - ./conf/mongo/mongo-setup.sh:/scripts/mongo-setup.sh:ro
       - mongo-cert:/etc/ssl/mongo:ro
@@ -145,7 +147,7 @@ services:
     hostname: mongo01
     container_name: mongo01
     depends_on:
-      certificate-setup:
+      setup-certificate:
         condition: service_completed_successfully
     ports:
       - 27017:27017
@@ -164,7 +166,7 @@ services:
       start_interval: 1s
       retries: 5
     labels:
-      - "monitor"
+      - "monitor-non-ecs"
     volumes:
       - mongo-data:/data/db
       - ./conf/mongo/mongod.conf:/etc/mongod.conf:ro
@@ -173,14 +175,14 @@ services:
     networks:
       - mongo-net
 
-  elastic-setup:
+  setup-elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     depends_on:
       elastic01:
         condition: service_healthy
     restart: "no"
     labels:
-      - "monitor1"
+      - "monitor-non-ecs"
     environment:
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - KIBANA_PASSWORD=${KIBANA_PASSWORD}
@@ -195,7 +197,7 @@ services:
   elastic01:
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     depends_on:
-      certificate-setup:
+      setup-certificate:
         condition: service_completed_successfully
     hostname: elastic01
     container_name: elastic01
@@ -207,7 +209,7 @@ services:
       - ./conf/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
       - elastic-cert:/usr/share/elasticsearch/config/certs:ro
     labels:
-      - "monitor"
+      - "monitor-ecs"
     ports:
       - ${ES_PORT}:9200
     mem_limit: ${MEM_LIMIT}
@@ -231,12 +233,12 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
     depends_on:
-      elastic-setup:
+      setup-elastic:
         condition: service_completed_successfully
     hostname: kibana
     container_name: kibana
     labels:
-      - "monitor"
+      - "monitor-ecs"
     volumes:
       - kibana-data:/usr/share/kibana/data
       - ./conf/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
@@ -303,9 +305,9 @@ services:
       test: >
         curl -s --cacert /usr/share/elastic-agent/certs/ca.pem https://localhost:8220/api/status |
         grep -q 'HEALTHY'
-      interval: 10s
+      interval: 15s
       timeout: 10s
-      retries: 5
+      retries: 10
     volumes:
       - fleet-server-data:/usr/share/elastic-agent
       - fleet-cert:/usr/share/elastic-agent/certs:ro

@@ -128,10 +128,10 @@ xpack.fleet.agentPolicies:
               username: ${KIBANA_USERNAME}
               password: ${KIBANA_PASSWORD}
               ssl: "certificate_authorities: [\"/usr/share/elastic-agent/certs/ca.pem\"]"
-      - name: Docker
+      - name: Docker ESC Compatible
         package:
           name: docker
-        id: docker-preconfigured-policy
+        id: docker-ecs-compatible-policy
         inputs:
           docker-filestream:
             enabled: true
@@ -141,8 +141,28 @@ xpack.fleet.agentPolicies:
                 vars:
                   paths:
                     - "/var/lib/docker/containers/${docker.container.id}/*-json.log"
-                  condition: "hasKey(${docker.container.labels}, 'monitor')"
-#                  additionalParsersConfig: " - ndjson:\n     overwrite_keys: true\n     expand_keys: true\n     add_error_key: true\n     ignore_decoding_error: true\n# - multiline:\n#     type: pattern\n#     pattern: '^\\['\n#     negate: true\n#     match: after\n"
+                  condition: "hasKey(${docker.container.labels}, 'monitor-ecs')"
+                  additionalParsersConfig: " - ndjson:\n     overwrite_keys: true\n     add_error_key: true\n     expand_keys: true\n     ignore_decoding_error: true\n"
+#                  additionalParsersConfig: " - ndjson:\n     overwrite_keys: true\n     add_error_key: true\n     expand_keys: true\n - multiline:\n     type: pattern\n     pattern: '^\\['\n     negate: true\n     match: after\n"
+#                  additionalParsersConfig: " - ndjson:\n     overwrite_keys: true\n     expand_keys: true\n     add_error_key: true\n     ignore_decoding_error: false\n# - multiline:\n#     type: pattern\n#     pattern: '^\\['\n#     negate: true\n#     match: after\n"
+                  containerParserStream: "all"
+      - name: Docker Not ECS Compatible
+        package:
+          name: docker
+        id: docker-no-ecs-compatible-policy
+        inputs:
+          docker-filestream:
+            enabled: true
+            streams:
+              '[docker.container_logs]':
+                enabled: true
+                vars:
+                  paths:
+                    - "/var/lib/docker/containers/${docker.container.id}/*-json.log"
+                  condition: "hasKey(${docker.container.labels}, 'monitor-non-ecs')"
+#                  processors: "..."
+#                  additionalParsersConfig: " - ndjson:\n     overwrite_keys: true\n     add_error_key: true\n     expand_keys: true\n - multiline:\n     type: pattern\n     pattern: '^\\['\n     negate: true\n     match: after\n"
+#                  additionalParsersConfig: " - ndjson:\n     overwrite_keys: true\n     expand_keys: true\n     add_error_key: true\n     ignore_decoding_error: false\n# - multiline:\n#     type: pattern\n#     pattern: '^\\['\n#     negate: true\n#     match: after\n"
                   containerParserStream: "all"
       - name: Elastic Agent
         package:
@@ -166,3 +186,4 @@ logging:
         type: json
   root:
     appenders: [json-layout]
+    level: info
