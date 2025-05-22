@@ -1,4 +1,4 @@
-debug: true
+#debug: true
 bot:
   username: ${BOT_USERNAME}
   token: ${BOT_TOKEN}
@@ -11,8 +11,9 @@ app:
 spring:
   application:
     name: multisearch-bot
-  main.banner-mode: off
-#  aop:
+  main:
+    banner-mode: off
+  #  aop:
 #    auto: true
 #    proxy-target-class: true
   data:
@@ -156,7 +157,16 @@ spring:
             certificate: "file:${app.auth-path}/tgAppMongo.pem"
             private-key: "file:${app.auth-path}/tgAppMongo.key"
 
-#logging:
+
+logging:
+  structured:
+    ecs:
+      service:
+        environment:
+#  org:
+#    telegram.telegrambots.abilitybots.api.bot.BaseAbilityBot: DEBUG
+
+
 #  level:
 #    tracer: TRACE
 #    org:

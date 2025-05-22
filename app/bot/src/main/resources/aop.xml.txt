@@ -8,7 +8,7 @@
 
     <aspects>
         <!-- weave in just this aspect -->
-        <aspect name="lubos.multisearch.telegrambot.logging.LogAspect"/>
+        <aspect name="lubos.multisearch.telegrambot.logging.LoggingAspects"/>
     </aspects>
 
 </aspectj>

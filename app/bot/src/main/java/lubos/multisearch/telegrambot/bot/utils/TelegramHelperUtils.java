@@ -35,11 +35,9 @@ public final class TelegramHelperUtils {
         return null;
     }
 
-    //TODO switch Pattern matching for class
     public static Locale userLocale(MessageContext ctx) {
         return Locale.of(ctx.user().getLanguageCode());
     }
-    //TODO switch Pattern matching for class
     public static Locale userLocale(Update upd) {
         return Locale.of(getUser(upd).getLanguageCode());
     }

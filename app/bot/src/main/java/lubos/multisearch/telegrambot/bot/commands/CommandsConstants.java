@@ -93,5 +93,8 @@ public class CommandsConstants {
     final Pattern PURGE_USER_INPUT_PATTERN = Pattern.compile("^(?:/purge )?(?<username>@?\\w+)$");
     final Pattern PURGE_USER_CALLBACK_PATTERN = Pattern.compile("^purge (?<username>\\w+) users (?<usersPage>\\d{1,4}|-1)$");
     final String PURGE_USER_CALLBACK = "PURGE_USER_CALLBACK";
+
+    final String DEFAULT = "default";
+    final String UNKNOWN_COMMAND_FALLBACK_MESSAGE = "command.default.fallback_message";
 }
 

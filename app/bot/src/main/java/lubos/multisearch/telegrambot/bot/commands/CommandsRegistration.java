@@ -1,11 +1,16 @@
 package lubos.multisearch.telegrambot.bot.commands;
 
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.abilitybots.api.objects.Privacy;
+import org.telegram.telegrambots.abilitybots.api.sender.SilentSender;
 
+import java.util.Locale;
 import java.util.Map;
 
+import static lubos.multisearch.telegrambot.bot.commands.Command.DEFAULT;
+import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.userLocale;
 import static org.telegram.telegrambots.abilitybots.api.objects.Flag.DOCUMENT;
 import static org.telegram.telegrambots.abilitybots.api.objects.Flag.TEXT;
 
@@ -13,40 +18,43 @@ import static org.telegram.telegrambots.abilitybots.api.objects.Flag.TEXT;
 public class CommandsRegistration {
 
     final TelegramCommandBuilder commandBuilder;
+    final MessageSource messageSource;
 
-    public CommandsRegistration(TelegramCommandBuilder commandBuilder) {
+
+    public CommandsRegistration(TelegramCommandBuilder commandBuilder, MessageSource messageSource) {
         this.commandBuilder = commandBuilder;
+        this.messageSource = messageSource;
     }
 
     @Bean
-    TelegramCommand banUserCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand banUserCommand( TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.BAN)
                 .commandInfo(CommandsConstants.BAN_INFO)
                 .privacy(Privacy.ADMIN)
                 .inputPattern(CommandsConstants.BAN_USER_INPUT_PATTERN)
                 .withReply(CommandsConstants.SPECIFY_USER_TO_BAN, TelegramCommandBuilder.HAS_INPUT, TEXT)
-                .addCallbackReply(CommandsConstants.BAN_USER_CALLBACK_PATTERN, CommandsConstants.BAN_USER_CALLBACK)
+                .addNewCallback(CommandsConstants.BAN_USER_CALLBACK_PATTERN, CommandsConstants.BAN_USER_CALLBACK)
                 .build();
     }
 
 
     @Bean
-    TelegramCommand deleteDocumentCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand deleteDocumentCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.DELETE)
                 .commandInfo(CommandsConstants.DELETE_DOCUMENT_INFO)
                 .privacy(Privacy.PUBLIC)
                 .inputPattern(CommandsConstants.DOCUMENT_DELETE_INPUT_PATTERN)
                 .withReply(CommandsConstants.SPECIFY_DOCUMENT_TO_DELETE, TelegramCommandBuilder.HAS_INPUT, TEXT)
-                .addCallbackReply(CommandsConstants.DOCUMENT_DELETE_CALLBACK_PATTERN, CommandsConstants.DOC_DELETE_CALLBACK)
+                .addNewCallback(CommandsConstants.DOCUMENT_DELETE_CALLBACK_PATTERN, CommandsConstants.DOC_DELETE_CALLBACK)
                 .withMenuCallback()
                 .build();
     }
 
     @Bean
-    TelegramCommand demoteAdminCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand demoteAdminCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.DEMOTE)
                 .commandInfo(CommandsConstants.DEMOTE_INFO)
                 .privacy(Privacy.CREATOR)
@@ -57,8 +65,8 @@ public class CommandsRegistration {
 
 
     @Bean
-    TelegramCommand documentsContentsCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand documentsContentsCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.CONTENTS)
                 .commandInfo(CommandsConstants.DOC_CONTENTS_INFO)
                 .privacy(Privacy.PUBLIC)
@@ -70,8 +78,8 @@ public class CommandsRegistration {
     }
 
     @Bean
-    TelegramCommand infoCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand infoCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.INFO)
                 .commandInfo(CommandsConstants.INFO_INFO)
                 .privacy(Privacy.PUBLIC)
@@ -79,18 +87,18 @@ public class CommandsRegistration {
     }
 
     @Bean
-    TelegramCommand languageCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand languageCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.LANGUAGE)
                 .commandInfo(CommandsConstants.LANGUAGE_INFO)
                 .privacy(Privacy.PUBLIC)
-                .addCallbackReply(CommandsConstants.LANGUAGE_CHANGE_CALLBACK_PATTERN, CommandsConstants.LANGUAGE_CALLBACK)
+                .addNewCallback(CommandsConstants.LANGUAGE_CHANGE_CALLBACK_PATTERN, CommandsConstants.LANGUAGE_CALLBACK)
                 .build();
     }
 
     @Bean
-    TelegramCommand availableCommandsCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand availableCommandsCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.COMMANDS)
                 .commandInfo(CommandsConstants.COMMANDS_INFO)
                 .privacy(Privacy.PUBLIC)
@@ -99,8 +107,8 @@ public class CommandsRegistration {
     }
 
     @Bean
-    TelegramCommand listDocumentsCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand listDocumentsCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.DOCUMENTS)
                 .commandInfo(CommandsConstants.LIST_DOCUMENTS_INFO)
                 .privacy(Privacy.PUBLIC)
@@ -110,8 +118,8 @@ public class CommandsRegistration {
     }
 
     @Bean
-    TelegramCommand listRegistrationRequestsCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand listRegistrationRequestsCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.REGISTRATION_REQUESTS)
                 .commandInfo(CommandsConstants.REGISTRATION_REQUESTS_INFO)
                 .privacy(Privacy.ADMIN)
@@ -121,8 +129,8 @@ public class CommandsRegistration {
     }
 
     @Bean
-    TelegramCommand listUsersCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand listUsersCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.USERS)
                 .commandInfo(CommandsConstants.LIST_USERS_INFO)
                 .privacy(Privacy.ADMIN)
@@ -132,22 +140,22 @@ public class CommandsRegistration {
     }
 
     @Bean
-    TelegramCommand getChapterCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand getChapterCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.CHAPTER)
                 .commandInfo(CommandsConstants.CHAPTER_INFO)
                 .privacy(Privacy.PUBLIC)
                 .inputPattern(CommandsConstants.CHAPTER_INPUT_PATTERN)
                 .withReply(CommandsConstants.SPECIFY_CHAPTER_ID, TelegramCommandBuilder.HAS_INPUT, TEXT)
                 .pageable(CommandsConstants.CHAPTER_PAGEABLE_CALLBACK_PATTERN)
-                .addCallbackReply(CommandsConstants.EXPAND_CHAPTER_CALLBACK_PATTERN, CommandsConstants.CHAPTER_EXPAND_CALLBACK)
+                .addNewCallback(CommandsConstants.EXPAND_CHAPTER_CALLBACK_PATTERN, CommandsConstants.CHAPTER_EXPAND_CALLBACK)
                 .build();
     }
 
 
     @Bean
-    TelegramCommand promoteUserCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand promoteUserCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.PROMOTE)
                 .commandInfo(CommandsConstants.PROMOTE_INFO)
                 .privacy(Privacy.CREATOR)
@@ -158,21 +166,21 @@ public class CommandsRegistration {
 
 
     @Bean
-    TelegramCommand registerUserCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand registerUserCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.REGISTER)
                 .commandInfo(CommandsConstants.REGISTER_INFO)
                 .privacy(Privacy.ADMIN)
                 .inputPattern(CommandsConstants.REGISTER_USER_INPUT_PATTERN)
                 .withReply(CommandsConstants.SPECIFY_USER_TO_APPROVE_REGISTRATION, TelegramCommandBuilder.HAS_INPUT, TEXT)
-                .addCallbackReply(CommandsConstants.REGISTER_USER_CALLBACK_PATTERN, CommandsConstants.REGISTER_USER_CALLBACK)
+                .addNewCallback(CommandsConstants.REGISTER_USER_CALLBACK_PATTERN, CommandsConstants.REGISTER_USER_CALLBACK)
                 .build();
     }
 
 
     @Bean
-    TelegramCommand searchCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand searchCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.SEARCH)
                 .commandInfo(CommandsConstants.SEARCH_INFO)
                 .privacy(Privacy.PUBLIC)
@@ -185,8 +193,8 @@ public class CommandsRegistration {
 
 
     @Bean
-    TelegramCommand startCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand startCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.START)
                 .commandInfo(CommandsConstants.START_INFO)
                 .privacy(Privacy.PUBLIC)
@@ -194,26 +202,26 @@ public class CommandsRegistration {
     }
 
     @Bean
-    TelegramCommand unbanUserCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand unbanUserCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.UNBAN)
                 .commandInfo(CommandsConstants.UNBAN_INFO)
                 .privacy(Privacy.ADMIN)
                 .inputPattern(CommandsConstants.UNBAN_USER_INPUT_PATTERN)
                 .withReply(CommandsConstants.SPECIFY_USER_TO_UNBAN, TelegramCommandBuilder.HAS_INPUT, TEXT)
-                .addCallbackReply(CommandsConstants.UNBAN_USER_CALLBACK_PATTERN, CommandsConstants.UNBAN_CALLBACK)
+                .addNewCallback(CommandsConstants.UNBAN_USER_CALLBACK_PATTERN, CommandsConstants.UNBAN_CALLBACK)
                 .build();
     }
 
 
     @Bean
-    TelegramCommand uploadDocumentCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand uploadDocumentCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.UPLOAD)
                 .commandInfo(CommandsConstants.UPLOAD_DOCUMENT_INFO)
                 .privacy(Privacy.PUBLIC)
                 .withReply(CommandsConstants.SEND_YOUR_DOCUMENT, TelegramCommandBuilder.ALWAYS_REPLY, DOCUMENT.or(TEXT))
-                .parameterExtractor((upd, pattern) -> {
+                .parameterExtractor((upd, _) -> {
                     if (DOCUMENT.test(upd)) {
                         var document = upd.getMessage().getDocument();
                         return Map.of(CommandsConstants.FILE_NAME, document.getFileName(), CommandsConstants.FILE_ID, document.getFileId(),
@@ -228,16 +236,32 @@ public class CommandsRegistration {
 
 
     @Bean
-    TelegramCommand purgeUserCommand() {
-        return commandBuilder.newCommand()
+    TelegramCommand purgeUserCommand(TelegramCommandBuilder builder) {
+        return builder
                 .command(Command.PURGE)
                 .commandInfo(CommandsConstants.PURGE_INFO)
                 .privacy(Privacy.CREATOR)
                 .inputPattern(CommandsConstants.PURGE_USER_INPUT_PATTERN)
                 .withReply(CommandsConstants.SPECIFY_USER_TO_PURGE, TelegramCommandBuilder.HAS_INPUT, TEXT)
-                .addCallbackReply(CommandsConstants.PURGE_USER_CALLBACK_PATTERN, CommandsConstants.PURGE_USER_CALLBACK)
+                .addNewCallback(CommandsConstants.PURGE_USER_CALLBACK_PATTERN, CommandsConstants.PURGE_USER_CALLBACK)
                 .build();
     }
 
+    @Bean
+    TelegramCommand unknownUserInputDefaultCommand(TelegramCommandBuilder builder) {
+//      org.telegram.telegrambots.abilitybots.api.bot.BaseAbilityBot.getAbility
+        return builder
+                .command(DEFAULT)
+                .commandInfo(CommandsConstants.DEFAULT)
+                .privacy(Privacy.PUBLIC)
+                .commandHandler((ctx, _, _) -> {
+                            var locale = userLocale(ctx);
+                            var sender = ctx.bot().getSilent();
+                            sender.send(messageSource.getMessage(CommandsConstants.UNKNOWN_COMMAND_FALLBACK_MESSAGE, null, locale),
+                                    ctx.chatId());
+                        }
+                )
+                .build();
+    }
 
 }
