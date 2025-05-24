@@ -17,10 +17,6 @@ public class IncorrectInputFormatException extends RuntimeException {
     public IncorrectInputFormatException(String inputText) {
         this.inputText = inputText;
     }
-    public IncorrectInputFormatException(String inputText, String command) {
-        this.inputText = inputText;
-        this.command = command;
-    }
 
     public String getLocalizedMessage(MessageSource messageSource, Locale locale) {
         return messageSource.getMessage(INCORRECT_INPUT_ARG_FORMAT, new Object[]{TelegramHelperUtils.escape(inputText), command}, locale);

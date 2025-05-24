@@ -1,79 +1,89 @@
 package lubos.multisearch.telegrambot.logging;
 
-//import org.aspectj.lang.annotation.Aspect;
-//import org.aspectj.lang.annotation.Before;
+import lubos.multisearch.telegrambot.bot.commands.processing.impl.DefaultCommandHandler;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.MDC;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.abilitybots.api.objects.MessageContext;
 import org.telegram.telegrambots.meta.api.objects.Update;
+
+import java.util.Map;
+
+import static lubos.multisearch.telegrambot.logging.LogHelper.*;
+import static org.telegram.telegrambots.abilitybots.api.objects.Flag.MESSAGE;
 
 @Aspect
 @Component
 public class LoggingAspects {
 
+    final LogHelper logHelper;
 
-    public static final String RECEIVED_TG_MESSAGE = "logging.receive.message";
-    public static final String RECEIVED_TG_CALLBACK = "logging.receive.callback";
-    public static final String STARTING_PREPROCESSING_INPUT_MESSAGE = "logging.preprocess.message.start";
-    public static final String STARTING_PREPROCESSING_INPUT_CALLBACK = "logging.preprocess.callback.start";
-    public static final String BOT_INITIALIZED = "logging.bot.initialized";
-    public static final String MENU_COMMANDS_SET = "logging.menu.commands.set";
-
-
-    @Autowired
-    LogHelper logHelper;
+    public LoggingAspects(LogHelper logHelper) {
+        this.logHelper = logHelper;
+    }
 
 
     @Pointcut("target(lubos.multisearch.telegrambot.bot.MultiSearchBotUpdateConsumer)")
-    public void inTelegramBot() {}
+    public void inTelegramBot() {
+    }
 
-//    @Around("inTelegramBot() && execution(void initialize())")
-//    public void BotInitialized(ProceedingJoinPoint joinPoint) throws Throwable {
-//        logHelper.logBotInitializing();
-//        joinPoint.proceed();
-//        logHelper.logBotInitialized();
-//    }
+    @Pointcut("inTelegramBot() && execution(void consume(..))")
+    public void botConsumeMethod() {
+    }
 
-    @Around("inTelegramBot() && execution(void consume(..)) && args(update)")
+    @Pointcut("target(lubos.multisearch.telegrambot.bot.commands.processing.CommandHandler)")
+    public void commandHandlerImpl() {
+    }
+
+    @Pointcut("commandHandlerImpl() && execution(void handleCommand(..))")
+    public void commandHandlerImplMethod() {
+    }
+
+
+    @Order(1)
+    @Around("botConsumeMethod() && args(update)")
+    public void configureMDC(ProceedingJoinPoint pjp, Update update) throws Throwable {
+        try {
+            var ctxMap = MESSAGE.test(update) ?
+                    Map.of(UPDATE_ID, update.getUpdateId().toString(),
+                            CHAT_ID, update.getMessage().getChatId().toString(),
+                            USERNAME, update.getMessage().getFrom().getUserName())
+                    :
+                    Map.of(UPDATE_ID, update.getUpdateId().toString(),
+                            CHAT_ID, update.getCallbackQuery().getMessage().getChatId().toString(),
+                            USERNAME, update.getCallbackQuery().getFrom().getUserName());
+            MDC.setContextMap(ctxMap);
+            pjp.proceed(pjp.getArgs());
+        } finally {
+            MDC.clear();
+        }
+    }
+
+    @Order(2)
+    @Around("botConsumeMethod() && args(update)")
     public void logUpdate(ProceedingJoinPoint pjp, Update update) throws Throwable {
         logHelper.logUpdateReceived(update);
         pjp.proceed(pjp.getArgs());
         logHelper.logUpdateProcessed(update);
     }
 
-    @Pointcut("target(lubos.multisearch.telegrambot.bot.commands.processing.CommandHandler)")
-    public void commandHandlerImpl() {}
-
-    @Around("commandHandlerImpl() && execution(void handleCommand(..)) && args(messageContext,..,contextId)")
-    public void logCommandProcessing(ProceedingJoinPoint pjp, MessageContext messageContext, String contextId) throws Throwable {
-        logHelper.logCommandHandlerStarted(messageContext,contextId);
+    @Order(1)
+    @Around("commandHandlerImplMethod()  && args(..,contextId)")
+    public void additionalMDC(ProceedingJoinPoint pjp, String contextId) throws Throwable {
+        String command = pjp.getTarget() instanceof DefaultCommandHandler defaultImpl ?
+                defaultImpl.getCommand().name() : "-";
+        MDC.put(COMMAND, command);
+        MDC.put(CONTEXT_ID, contextId);
         pjp.proceed(pjp.getArgs());
-        logHelper.logCommandHandlerFinished(messageContext,contextId);
     }
 
-
-//    @Before(value = "execution(void lubos.multisearch.telegrambot.bot.commands.TelegramCommand.handleCommand(..))")
-//    public void logUpdate(){
-//        System.out.println("1111111111111111111111111111111111111111111111");
-//        System.out.println("1111111111111111111111111111111111111111111111");
-//        System.out.println("1111111111111111111111111111111111111111111111");
-//    }
-//    @Before("execution(* lubos.multisearch.telegrambot.bot.commands.processing.CommandHandler+.handleCommand(..))")
-    public void logUpdate3(){
-        System.out.println("22222222222222222222222222222222222222222222222");
-        System.out.println("22222222222222222222222222222222222222222222222");
-        System.out.println("22222222222222222222222222222222222222222222222");
-    }
-
-
-//    @Before("execution(* lubos.multisearch.telegrambot.bot.commands.processing.ParametersExtractor+.extractParameters(..))")
-    public void logUpdate4(){
-        System.out.println("3333333333333333333333333333333333333333333333");
-        System.out.println("3333333333333333333333333333333333333333333333");
-        System.out.println("3333333333333333333333333333333333333333333333");
-
+    @Order(2)
+    @Around("commandHandlerImplMethod()")
+    public void logCommandProcessing(ProceedingJoinPoint pjp) throws Throwable {
+        logHelper.logCommandHandlerStarted();
+        pjp.proceed(pjp.getArgs());
+        logHelper.logCommandHandlerFinished();
     }
 
 

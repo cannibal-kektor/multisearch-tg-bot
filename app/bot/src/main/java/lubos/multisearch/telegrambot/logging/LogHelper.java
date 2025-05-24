@@ -1,148 +1,104 @@
 package lubos.multisearch.telegrambot.logging;
 
 import lombok.extern.slf4j.Slf4j;
-//import org.aspectj.lang.annotation.Before;
+import lubos.multisearch.telegrambot.bot.commands.exception.IncorrectInputFormatException;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.abilitybots.api.objects.MessageContext;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.util.Locale;
+
+import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.escape;
 import static org.telegram.telegrambots.abilitybots.api.objects.Flag.MESSAGE;
 
-@Component
 @Slf4j
+@Component
 public class LogHelper {
 
-    public static final String RECEIVED_TG_MESSAGE = "logging.receive.message";
-    public static final String RECEIVED_TG_CALLBACK = "logging.receive.callback";
-    public static final String STARTING_PREPROCESSING_INPUT_MESSAGE = "logging.update.message.start";
-    public static final String FINISHED_PROCESSING_INPUT_MESSAGE = "logging.update.message.finish";
-    public static final String STARTING_PREPROCESSING_INPUT_CALLBACK = "logging.update.callback.start";
-    public static final String FINISHED_PROCESSING_INPUT_CALLBACK = "logging.update.callback.finish";
-    public static final String STARTING_COMMAND_HANDLER = "logging.command.handler.start";
-    public static final String FINISHED_COMMAND_HANDLER = "logging.command.handler.finish";
+    public static final String UPDATE_RECEIVED = "Telegram update received. Input: {}";
+    public static final String UPDATE_PROCESSING_FINISHED = "Telegram update processing finished";
+    public static final String STARTING_COMMAND_HANDLER = "Start Command handler processing";
+    public static final String FINISHED_COMMAND_HANDLER = "Finished Command handler processing";
+    public static final String INCORRECT_COMMAND_INPUT = "Incorrect user input : {}";
+    public static final String MESSAGE_SENDING_BROKER_ERROR = "Error while sending message to broker: [{}]";
+    public static final String BOT_INITIALIZING = "Telegram Bot Initializing";
+    public static final String BOT_INITIALIZED = "Telegram Bot Initialized";
+    public static final String MENU_COMMANDS_SET = "Telegram commands have been set";
 
-    public static final String BOT_INITIALIZING = "logging.bot.initializing";
-    public static final String BOT_INITIALIZED = "logging.bot.initialized";
-    public static final String MENU_COMMANDS_SET = "logging.menu.commands.set";
+    public static final String UPDATE_ID = "telegram.update_id";
+    public static final String CHAT_ID = "telegram.chat_id";
+    public static final String USERNAME = "telegram.username";
+    public static final String COMMAND = "telegram.command";
+    public static final String CONTEXT_ID = "telegram.context_id";
 
+    final MessageSource messageSource;
 
-
-    public void logBotInitializing() {
-        log.atInfo()
-                .setMessage(BOT_INITIALIZED)
-                .log();
+    public LogHelper(MessageSource messageSource) {
+        this.messageSource = messageSource;
     }
 
-    public void logBotInitialized() {
-        log.atInfo()
+    public void logBotInitializing() {
+        log.atError()
                 .setMessage(BOT_INITIALIZING)
                 .log();
     }
 
-    public void logUpdateReceived(Update update) {
-        boolean isMessage = MESSAGE.test(update);
-        if (isMessage) {
-            var msg = update.getMessage();
-            log.atError()
-                    .setMessage(STARTING_PREPROCESSING_INPUT_MESSAGE)
-//                    .addKeyValue("userId", msg.getFrom()::getId)
-//                    .addKeyValue("username", msg.getFrom()::getUserName)
-//                    .addKeyValue("messageId", msg::getMessageId)
-//                    .addKeyValue("message", msg::getText)
-//                    .addKeyValue("command", command.command().toString())
-//                    .addKeyValue("contextId", contextId)
-                    .log();
-        } else {
-            var callback = update.getCallbackQuery();
-            log.atError()
-                    .setMessage(STARTING_PREPROCESSING_INPUT_CALLBACK)
-//                    .addKeyValue("userId", callback.getFrom()::getId)
-//                    .addKeyValue("username", callback.getFrom()::getUserName)
-//                    .addKeyValue("messageId", callback::getId)
-//                    .addKeyValue("message", callback::getData)
-//                    .addKeyValue("command", command.command().toString())
-//                    .addKeyValue("contextId", contextId)
-                    .log();
-        }
+    public void logBotInitialized() {
+        log.atError()
+                .setMessage(BOT_INITIALIZED)
+                .log();
     }
 
-//             .addKeyValue("userId", msg.getFrom()::getId)
-//            .addKeyValue("username", msg.getFrom()::getUserName)
-//            .addKeyValue("messageId", msg::getMessageId)
-//            .addKeyValue("message", msg::getText)
-//            .addKeyValue("command", command.command().toString())
-//            .addKeyValue("contextId", contextId)
+    public void logMenuCommandsConfigured() {
+        log.atError()
+                .setMessage(MENU_COMMANDS_SET)
+                .log();
+    }
 
+    public void logUpdateReceived(Update update) {
+        log.atError()
+                .setMessage(UPDATE_RECEIVED)
+                .addArgument(() -> MESSAGE.test(update) ?
+                        escape(update.getMessage().getText())
+                        : update.getCallbackQuery().getData())
+                .log();
+    }
 
     public void logUpdateProcessed(Update update) {
-        boolean isMessage = MESSAGE.test(update);
-        if (isMessage) {
-            var msg = update.getMessage();
-            log.atError()
-                    .setMessage(FINISHED_PROCESSING_INPUT_MESSAGE)
-//                    .addKeyValue("userId", msg.getFrom()::getId)
-//                    .addKeyValue("username", msg.getFrom()::getUserName)
-//                    .addKeyValue("messageId", msg::getMessageId)
-//                    .addKeyValue("message", msg::getText)
-//                    .addKeyValue("command", command.command().toString())
-//                    .addKeyValue("contextId", contextId)
-                    .log();
-        } else {
-            var callback = update.getCallbackQuery();
-            log.atError()
-                    .setMessage(FINISHED_PROCESSING_INPUT_CALLBACK)
-//                    .addKeyValue("userId", callback.getFrom()::getId)
-//                    .addKeyValue("username", callback.getFrom()::getUserName)
-//                    .addKeyValue("messageId", callback::getId)
-//                    .addKeyValue("message", callback::getData)
-//                    .addKeyValue("command", command.command().toString())
-//                    .addKeyValue("contextId", contextId)
-                    .log();
-        }
-    }
-
-    public void logCommandHandlerStarted(MessageContext messageContext, String contextId) {
-
         log.atError()
-                .setMessage(STARTING_COMMAND_HANDLER + " " + messageContext.user().getUserName())
-                .log();
-//        boolean isMessage = MESSAGE.test(update);
-//        if (isMessage) {
-//            var msg = update.getMessage();
-//            log.atError()
-//                    .setMessage(STARTING_COMMAND_HANDLER)
-////                    .addKeyValue("userId", msg.getFrom()::getId)
-////                    .addKeyValue("username", msg.getFrom()::getUserName)
-////                    .addKeyValue("messageId", msg::getMessageId)
-////                    .addKeyValue("message", msg::getText)
-////                    .addKeyValue("command", command.command().toString())
-////                    .addKeyValue("contextId", contextId)
-//                    .log();
-//        } else {
-//            var callback = update.getCallbackQuery();
-//            log.atError()
-//                    .setMessage(STARTING_COMMAND_HANDLER)
-////                    .addKeyValue("userId", callback.getFrom()::getId)
-////                    .addKeyValue("username", callback.getFrom()::getUserName)
-////                    .addKeyValue("messageId", callback::getId)
-////                    .addKeyValue("message", callback::getData)
-////                    .addKeyValue("command", command.command().toString())
-////                    .addKeyValue("contextId", contextId)
-//                    .log();
-//        }
-    }
-
-//             .addKeyValue("userId", msg.getFrom()::getId)
-//            .addKeyValue("username", msg.getFrom()::getUserName)
-//            .addKeyValue("messageId", msg::getMessageId)
-//            .addKeyValue("message", msg::getText)
-//            .addKeyValue("command", command.command().toString())
-//            .addKeyValue("contextId", contextId)
-
-
-    public void logCommandHandlerFinished(MessageContext messageContext, String contextId) {
-        log.atError()
-                .setMessage(FINISHED_COMMAND_HANDLER + " " + messageContext.user().getUserName())
+                .setMessage(UPDATE_PROCESSING_FINISHED)
                 .log();
     }
+
+
+    public void logCommandHandlerStarted() {
+        log.atError()
+                .setMessage(STARTING_COMMAND_HANDLER)
+                .log();
+
+    }
+
+    public void logCommandHandlerFinished() {
+        log.atError()
+                .setMessage(FINISHED_COMMAND_HANDLER)
+                .log();
+    }
+
+
+    public void logIncorrectInputFormat(IncorrectInputFormatException ex) {
+        log.atError()
+                .setMessage(INCORRECT_COMMAND_INPUT)
+                .addArgument(() -> ex.getLocalizedMessage(messageSource, Locale.ENGLISH))
+                .setCause(ex)
+                .log();
+    }
+
+    public void logBrokerException(Exception ex) {
+        log.atError()
+                .setMessage(MESSAGE_SENDING_BROKER_ERROR)
+                .addArgument(ex::getMessage)
+                .setCause(ex)
+                .log();
+    }
+
 }

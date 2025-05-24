@@ -1,7 +1,7 @@
 package lubos.multisearch.processor.bot.commands.impl;
 
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.bot.commands.Command;
 import org.springframework.stereotype.Component;
 
@@ -22,10 +22,10 @@ public class InfoCommand extends CommandProcessor {
 
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        Locale locale = userLocale(actionMessage);
-        sender.send(actionMessage.chatId(), message(INFO_DESCRIPTION_FULL, locale),
-                keyboard.commandsKeyboard(actionMessage.user().getId(), locale));
+    public void process(CommandActionContext context) {
+        Locale locale = userLocale(context);
+        sender.send(context.chatId(), message(INFO_DESCRIPTION_FULL, locale),
+                keyboard.commandsKeyboard(context.user().getId(), locale));
 
     }
 }

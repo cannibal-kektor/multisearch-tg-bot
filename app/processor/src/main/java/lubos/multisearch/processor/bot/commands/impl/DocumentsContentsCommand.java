@@ -3,7 +3,7 @@ package lubos.multisearch.processor.bot.commands.impl;
 import lubos.multisearch.processor.bot.commands.Command;
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
 import lubos.multisearch.processor.bot.commands.PageableCommand;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.dto.ChapterCompressedDTO;
 import lubos.multisearch.processor.service.SearchService;
 import org.springframework.data.domain.Page;
@@ -45,33 +45,33 @@ public class DocumentsContentsCommand extends CommandProcessor implements Pageab
 
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        switch (actionMessage.contextId()) {
-            case MESSAGE, REPLY_MESSAGE, MENU_CALLBACK -> handleMessage(actionMessage, actionMessage.params());
-            case PAGING_CALLBACK -> handleCallback(actionMessage, actionMessage.params());
+    public void process(CommandActionContext context) {
+        switch (context.contextId()) {
+            case MESSAGE, REPLY_MESSAGE, MENU_CALLBACK -> handleMessage(context, context.params());
+            case PAGING_CALLBACK -> handleCallback(context, context.params());
         }
     }
 
 
-    private void handleMessage(ActionMessage actionMessage, Map<String, String> params) {
+    private void handleMessage(CommandActionContext context, Map<String, String> params) {
         String documentName = params.get(INPUT_ARG);
-        var page = searchService.getDocumentContents(documentName, username(actionMessage), pageConfigs().page());
-        Locale locale = userLocale(actionMessage);
+        var page = searchService.getDocumentContents(documentName, username(context), pageConfigs().page());
+        Locale locale = userLocale(context);
         String resultStr = pageToString(page, message(RESPONSE_PREFIX_FORMAT, locale, documentName), locale);
         params.put(DOC_ID, page.getContent().getFirst().documentId());
-        var keyboard = formKeyboard(page, params, actionMessage.user().getId(), locale);
-        sender.send(actionMessage.chatId(), resultStr, keyboard);
+        var keyboard = formKeyboard(page, params, context.user().getId(), locale);
+        sender.send(context.chatId(), resultStr, keyboard);
     }
 
 
-    private void handleCallback(ActionMessage actionMessage, Map<String, String> params) {
+    private void handleCallback(CommandActionContext context, Map<String, String> params) {
         int pageNum = Integer.parseInt(params.get(CONTENTS_PAGE));
         String documentId = params.get(DOC_ID);
         var page = searchService.getDocumentContents(documentId, pageConfigs().page().withPage(pageNum));
-        Locale locale = userLocale(actionMessage);
+        Locale locale = userLocale(context);
         String result = pageToString(page, message(RESPONSE_PREFIX_FORMAT, locale, page.getContent().getFirst().documentName()), locale);
-        var keyboard = formKeyboard(page, params, actionMessage.user().getId(), locale);
-        sender.send(actionMessage.chatId(), result, keyboard);
+        var keyboard = formKeyboard(page, params, context.user().getId(), locale);
+        sender.send(context.chatId(), result, keyboard);
     }
 
 

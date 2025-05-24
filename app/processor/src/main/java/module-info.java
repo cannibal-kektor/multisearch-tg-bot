@@ -34,6 +34,8 @@ open module botProcessor {
     requires com.google.common;
     requires spring.retry;
     requires com.rabbitmq.client;
+    requires org.aspectj.weaver;
+    requires org.slf4j;
 
 
 }

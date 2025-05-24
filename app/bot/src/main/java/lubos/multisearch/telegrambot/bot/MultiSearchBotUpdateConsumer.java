@@ -54,10 +54,13 @@ public class MultiSearchBotUpdateConsumer extends AbilityBot {
 
     @PostConstruct
     public void initialize() {
+        logHelper.logBotInitializing();
         onRegister();
         setMenuCommands();
+        logHelper.logBotInitialized();
     }
 
+    //TODO Can remove (aop)?
     @Override
     public void consume(Update update) {
         super.consume(update);
@@ -77,6 +80,7 @@ public class MultiSearchBotUpdateConsumer extends AbilityBot {
                 .toList();
         var command = new SetMyCommands(commandsList);
         getSilent().execute(command);
+        logHelper.logMenuCommandsConfigured();
     }
 
 

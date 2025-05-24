@@ -12,21 +12,19 @@ import java.util.List;
 
 
 @Component
-public class TelegramActionListener {
+public class TelegramCommandListener {
 
     private final EnumMap<Command, CommandProcessor> commandsProcessorsMap = new EnumMap<>(Command.class);
 
-    public TelegramActionListener(List<CommandProcessor> commandProcessors) {
+    public TelegramCommandListener(List<CommandProcessor> commandProcessors) {
         commandProcessors.forEach(commandProcessor ->
                 commandsProcessorsMap.put(commandProcessor.getCommand(), commandProcessor));
     }
 
-//    @RabbitListener(queues = "${app-config.rabbit.tgActionQueueName}", errorHandler = "rabbitErrorHandler")
     @RabbitListener(queues = "#{tgActionQueue}", errorHandler = "rabbitErrorHandler")
-//    @RabbitListener(queues = "#{tgActionQueue}")
-    void testConsume(@Payload @Valid ActionMessage actionMessage) {
-        var commandProcessor = commandsProcessorsMap.get(actionMessage.command());
-        commandProcessor.processCommand(actionMessage);
+    void consume(@Payload @Valid CommandActionContext context) {
+        var commandProcessor = commandsProcessorsMap.get(context.command());
+        commandProcessor.process(context);
     }
 
 }

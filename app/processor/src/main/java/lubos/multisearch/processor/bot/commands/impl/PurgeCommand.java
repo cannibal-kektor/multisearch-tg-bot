@@ -3,7 +3,7 @@ package lubos.multisearch.processor.bot.commands.impl;
 import lubos.multisearch.processor.bot.commands.Command;
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
 import lubos.multisearch.processor.bot.commands.helper.TelegramUtils;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.service.DocumentService;
 import lubos.multisearch.processor.service.UserService;
 import org.springframework.stereotype.Component;
@@ -33,15 +33,15 @@ public class PurgeCommand extends CommandProcessor {
     }
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        var parameters = actionMessage.params();
+    public void process(CommandActionContext context) {
+        var parameters = context.params();
         String username = TelegramUtils.stripTag(parameters.get(USERNAME));
         Long telegramId = userService.fetchTelegramId(username);
         String result = documentService.purgeUser(telegramId, username) ?
                 PURGED_SUCCESSFUL : USER_NO_DOCUMENTS;
-        Locale locale = TelegramUtils.userLocale(actionMessage);
-        var keyboard = formKeyboard(parameters, actionMessage.user().getId(), locale);
-        sender.send(actionMessage.chatId(), message(result, locale), keyboard);
+        Locale locale = TelegramUtils.userLocale(context);
+        var keyboard = formKeyboard(parameters, context.user().getId(), locale);
+        sender.send(context.chatId(), message(result, locale), keyboard);
     }
 
     private List<InlineKeyboardRow> formKeyboard(Map<String, String> params,

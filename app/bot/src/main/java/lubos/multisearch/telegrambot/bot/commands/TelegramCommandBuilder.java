@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.abilitybots.api.bot.BaseAbilityBot;
 import org.telegram.telegrambots.abilitybots.api.objects.*;
+import org.telegram.telegrambots.meta.api.methods.ActionType;
+import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 
@@ -23,7 +25,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static lombok.AccessLevel.PRIVATE;
-import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.BOT_TYPING;
 import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.userLocale;
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 import static org.telegram.telegrambots.abilitybots.api.objects.Ability.builder;
@@ -39,6 +40,15 @@ public class TelegramCommandBuilder {
     static Predicate<MessageContext> ALWAYS_REPLY = ctx -> false;
     static Predicate<MessageContext> HAS_INPUT = ctx -> TEXT.test(ctx.update()) && ctx.arguments().length > 0;
     static Predicate<Update> IS_REPLY_TO_BOT;
+    static Consumer<MessageContext> BOT_TYPING =
+            ctx -> {
+                var action = SendChatAction.builder()
+                        .action(ActionType.TYPING.toString())
+                        .chatId(ctx.chatId())
+                        .build();
+                ctx.bot().getSilent().execute(action);
+            };
+
 
     final MessageSource messageSource;
 

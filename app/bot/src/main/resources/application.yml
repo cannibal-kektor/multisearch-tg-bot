@@ -104,39 +104,12 @@ spring:
       bundle: rabbit-client
       algorithm: TLSv1.3
 
-  #  logging:
-#    level:
-#      tracer: TRACE
-#      org:
-#        springframework:
-#          jdbc:
-#            core:
-#              #          core: TRACE
-#              StatementCreatorUtils: TRACE
-#              JdbcTemplate: TRACE
-#
-#          data:
-#            elasticsearch:
-#              client:
-#                WIRE: TRACE
-
   #---SslAutoConfiguration--------------------------
   ssl:
     bundle:
-#      jks:
-#        rabbit-client:
-#          key:
-#          keystore:
-#            location:
-#            password:
-#            provider:
-#            type:
-
       pem:
         rabbit-client:
           keystore:
-#            certificate: "classpath:rabbit/telegramAppRabbit.pem"
-#            private-key: "classpath:rabbit/telegramAppRabbit.key"
             certificate: "file:${app.auth-path}/tgAppRabbit.pem"
             private-key: "file:${app.auth-path}/tgAppRabbit.key"
           #            private-key-password:
@@ -152,17 +125,14 @@ spring:
           #        file:
           #          quiet-period:
           keystore:
-#            certificate: "classpath:mongo/telegramAppMongo.pem"
-#            private-key: "classpath:mongo/telegramAppMongo.key"
             certificate: "file:${app.auth-path}/tgAppMongo.pem"
             private-key: "file:${app.auth-path}/tgAppMongo.key"
 
 
 logging:
   structured:
-    ecs:
-      service:
-        environment:
+    format:
+      console: ecs
 #  org:
 #    telegram.telegrambots.abilitybots.api.bot.BaseAbilityBot: DEBUG
 

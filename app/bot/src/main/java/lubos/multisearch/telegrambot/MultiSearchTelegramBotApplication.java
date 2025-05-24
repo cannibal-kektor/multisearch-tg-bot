@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.EnableLoadTimeWeaving;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 
@@ -14,13 +15,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 //@EnableLoadTimeWeaving(aspectjWeaving = EnableLoadTimeWeaving.AspectJWeaving.ENABLED)
 public class MultiSearchTelegramBotApplication {
     public static void main(String[] args) {
-        ConfigurableApplicationContext context = new SpringApplicationBuilder(MultiSearchTelegramBotApplication.class)
+        new SpringApplicationBuilder(MultiSearchTelegramBotApplication.class)
                 .web(WebApplicationType.NONE)
                 .run(args);
-
-//        context.getBeansOfType(TelegramCommand.class)
-//        TelegramCommand command = (TelegramCommand) context.getBean("unbanUserCommand");
-//        command.handleCommand(MessageContext.newContext(new Update(), null, null,null), null, null);
     }
 
 

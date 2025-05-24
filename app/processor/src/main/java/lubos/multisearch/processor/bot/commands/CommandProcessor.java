@@ -5,7 +5,7 @@ import lombok.experimental.FieldDefaults;
 import lubos.multisearch.processor.conf.BotInfo;
 import lubos.multisearch.processor.bot.commands.helper.TelegramKeyboard;
 import lubos.multisearch.processor.bot.commands.helper.TelegramSender;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 
@@ -51,7 +51,7 @@ public abstract class CommandProcessor {
     }
 
 
-    public abstract void processCommand(ActionMessage actionMessage);
+    public abstract void process(CommandActionContext context);
 
     public String message(String messageCode, Locale locale) {
         return messageSource.getMessage(messageCode, null, locale);

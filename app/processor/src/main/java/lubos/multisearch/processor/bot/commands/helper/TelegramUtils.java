@@ -1,7 +1,7 @@
 package lubos.multisearch.processor.bot.commands.helper;
 
 import com.google.common.escape.Escaper;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 
 import java.util.Locale;
 
@@ -26,11 +26,11 @@ public final class TelegramUtils {
         return lowerCase.startsWith("@") ? lowerCase.substring(1) : lowerCase;
     }
 
-    public static String username(ActionMessage actionMessage) {
-        return actionMessage.user().getUserName().toLowerCase();
+    public static String username(CommandActionContext context) {
+        return context.user().getUserName().toLowerCase();
     }
 
-    public static Locale userLocale(ActionMessage actionMessage) {
-        return Locale.of(actionMessage.user().getLanguageCode());
+    public static Locale userLocale(CommandActionContext context) {
+        return Locale.of(context.user().getLanguageCode());
     }
 }

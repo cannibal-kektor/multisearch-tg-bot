@@ -1,7 +1,7 @@
 package lubos.multisearch.processor.bot.commands.impl;
 
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.service.UserService;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -34,15 +34,15 @@ public class BanCommand extends CommandProcessor {
     }
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        var parameters = actionMessage.params();
+    public void process(CommandActionContext context) {
+        var parameters = context.params();
         String username = stripTag(parameters.get(USERNAME));
-        Long userId = actionMessage.user().getId();
-        String result = userService.banUser(username, username(actionMessage), userId) ?
+        Long userId = context.user().getId();
+        String result = userService.banUser(username, username(context), userId) ?
                 BANNED_SUCCESSFUL : ALREADY_BANNED;
-        Locale locale = userLocale(actionMessage);
+        Locale locale = userLocale(context);
         var keyboard = formKeyboard(parameters, userId, locale);
-        sender.send(actionMessage.chatId(), message(result, locale), keyboard);
+        sender.send(context.chatId(), message(result, locale), keyboard);
     }
 
     private List<InlineKeyboardRow> formKeyboard(Map<String, String> params, Long userId, Locale locale) {

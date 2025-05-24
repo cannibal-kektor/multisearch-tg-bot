@@ -2,7 +2,7 @@ package lubos.multisearch.processor.bot.commands.impl;
 
 import lubos.multisearch.processor.bot.commands.Command;
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.service.DocumentService;
 import lubos.multisearch.processor.exception.DocumentNameExistsException;
 import lubos.multisearch.processor.exception.DocumentTypeNotSupported;
@@ -48,20 +48,20 @@ public class UploadCommand extends CommandProcessor {
     }
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        boolean isFile = actionMessage.params().get(FILE_ID) != null;
+    public void process(CommandActionContext context) {
+        boolean isFile = context.params().get(FILE_ID) != null;
         try {
-            String documentId = isFile ? handleFile(actionMessage, actionMessage.params()) :
-                    handleHTML(actionMessage, actionMessage.params());
-            Locale locale = userLocale(actionMessage);
-            sender.send(actionMessage.chatId(), message(DOCUMENT_UPLOADED, locale),
-                    formKeyboard(documentId, actionMessage.user().getId(), locale));
+            String documentId = isFile ? handleFile(context, context.params()) :
+                    handleHTML(context, context.params());
+            Locale locale = userLocale(context);
+            sender.send(context.chatId(), message(DOCUMENT_UPLOADED, locale),
+                    formKeyboard(documentId, context.user().getId(), locale));
         } catch (MalformedURLException e) {
             throw new DocumentLinkFailedException(e);
         }
     }
 
-    private String handleFile(ActionMessage actionMessage, Map<String, String> params) throws MalformedURLException {
+    private String handleFile(CommandActionContext context, Map<String, String> params) throws MalformedURLException {
         String fileName = params.get(FILE_NAME);
 
         if (!IS_SUPPORTED_FILE.test(fileName)) {
@@ -70,7 +70,7 @@ public class UploadCommand extends CommandProcessor {
         if (IS_MORE_THAN_20_MB.test(params.get(FILE_SIZE))) {
             throw new FileTooBigException(fileName);
         }
-        User user = actionMessage.user();
+        User user = context.user();
         String fileId = params.get(FILE_ID);
         File file = sender.fetchFileDownloadInfo(fileId, fileName);
         String fileLink = file.getFileUrl(botInfo.token());
@@ -82,14 +82,14 @@ public class UploadCommand extends CommandProcessor {
         }
     }
 
-    private String handleHTML(ActionMessage actionMessage, Map<String, String> params) throws MalformedURLException {
+    private String handleHTML(CommandActionContext context, Map<String, String> params) throws MalformedURLException {
 //        String httpLink = params.get(HTML_LINK); ///pattern?
         String httpLink = params.get(HTTP_LINK);
         if (!IS_HTTP.test(httpLink)) {
             throw new DocumentTypeNotSupported(httpLink);
         }
         try {
-            return documentService.uploadHTML(actionMessage.user(), httpLink);
+            return documentService.uploadHTML(context.user(), httpLink);
         } catch (DuplicateKeyException e) {
             throw new DocumentNameExistsException(httpLink);
         }

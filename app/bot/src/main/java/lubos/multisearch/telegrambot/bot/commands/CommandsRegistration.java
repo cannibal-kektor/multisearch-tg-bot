@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static lubos.multisearch.telegrambot.bot.commands.Command.DEFAULT;
+import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.send;
 import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.userLocale;
 import static org.telegram.telegrambots.abilitybots.api.objects.Flag.DOCUMENT;
 import static org.telegram.telegrambots.abilitybots.api.objects.Flag.TEXT;
@@ -256,9 +257,7 @@ public class CommandsRegistration {
                 .privacy(Privacy.PUBLIC)
                 .commandHandler((ctx, _, _) -> {
                             var locale = userLocale(ctx);
-                            var sender = ctx.bot().getSilent();
-                            sender.send(messageSource.getMessage(CommandsConstants.UNKNOWN_COMMAND_FALLBACK_MESSAGE, null, locale),
-                                    ctx.chatId());
+                            send(ctx, messageSource.getMessage(CommandsConstants.UNKNOWN_COMMAND_FALLBACK_MESSAGE, null, locale));
                         }
                 )
                 .build();

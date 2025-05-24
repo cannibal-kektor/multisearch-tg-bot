@@ -3,7 +3,7 @@ package lubos.multisearch.processor.bot.commands.impl;
 import lubos.multisearch.processor.bot.commands.Command;
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
 import lubos.multisearch.processor.bot.commands.helper.TelegramUtils;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.service.UserService;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -26,10 +26,10 @@ public class StartCommand extends CommandProcessor {
     }
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        User user = actionMessage.user();
-        Locale locale = TelegramUtils.userLocale(actionMessage);
-        sender.send(actionMessage.chatId(), message(INFO_DESCRIPTION_FULL, locale),
+    public void process(CommandActionContext context) {
+        User user = context.user();
+        Locale locale = TelegramUtils.userLocale(context);
+        sender.send(context.chatId(), message(INFO_DESCRIPTION_FULL, locale),
                 keyboard.commandsKeyboard(user.getId(), locale));
 
         if (!userService.userExists(user.getId())) {
@@ -37,8 +37,8 @@ public class StartCommand extends CommandProcessor {
                 userService.createUser(user);
                 return;
             }
-            userService.createRequestForRegistration(user, actionMessage.chatId());
-            sender.send(actionMessage.chatId(), message(REQUEST_FOR_REGISTRATION_PENDING, locale));
+            userService.createRequestForRegistration(user, context.chatId());
+            sender.send(context.chatId(), message(REQUEST_FOR_REGISTRATION_PENDING, locale));
         }
     }
 

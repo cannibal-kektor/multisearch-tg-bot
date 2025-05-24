@@ -1,6 +1,6 @@
 package lubos.multisearch.processor.bot.commands.impl;
 
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
 import lubos.multisearch.processor.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +45,9 @@ public class AvailableCommandsCommand extends CommandProcessor {
 
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        Locale locale = userLocale(actionMessage);
-        Long userId = actionMessage.user().getId();
+    public void process(CommandActionContext context) {
+        Locale locale = userLocale(context);
+        Long userId = context.user().getId();
         int privacy = userService.getUserPrivacy(userId);
         boolean isRussian = locale.getLanguage().equals("ru");
         String result = switch (privacy) {
@@ -56,7 +56,7 @@ public class AvailableCommandsCommand extends CommandProcessor {
             case CREATOR -> isRussian ? allCommandsResponseRu : allCommandsResponseEn;
             default -> throw new IllegalArgumentException();
         };
-        sender.send(actionMessage.chatId(), result, keyboard.commandsKeyboard(userId, locale));
+        sender.send(context.chatId(), result, keyboard.commandsKeyboard(userId, locale));
     }
 
     private String buildResponse(List<CommandProcessor> commands, int privacy, Locale locale) {

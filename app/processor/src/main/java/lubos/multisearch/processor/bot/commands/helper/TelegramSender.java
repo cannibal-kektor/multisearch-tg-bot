@@ -1,7 +1,9 @@
 package lubos.multisearch.processor.bot.commands.helper;
 
 import lubos.multisearch.processor.exception.DocumentLinkFailedException;
+import lubos.multisearch.processor.logging.LogHelper;
 import org.jsoup.nodes.Entities;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -30,10 +32,13 @@ public class TelegramSender {
     private static final int MAX_MESSAGE_SIZE = 4096;
     //    static final int MAX_RAW_MESSAGE_SIZE = 2048;
     private static final Pattern REMOVE_HTML_TAGS_PATTERN = Pattern.compile("<b>|</b>|<blockquote>|</blockquote>|<code>|</code>|<i>|</i>|<u>|</u>|<em>|</em>");
+
+    private final LogHelper logHelper;
     private final TelegramClient telegramClient;
 
-    public TelegramSender(TelegramClient telegramClient) {
+    public TelegramSender(TelegramClient telegramClient, LogHelper logHelper) {
         this.telegramClient = telegramClient;
+        this.logHelper = logHelper;
     }
 
     public File fetchFileDownloadInfo(String fileId, String fileName) {
@@ -116,7 +121,7 @@ public class TelegramSender {
         try {
             return ofNullable(telegramClient.execute(method));
         } catch (TelegramApiException e) {
-//            log.error("Could not execute bot API method", e);
+            logHelper.logFailedRequestToTelegram(method, e);
             return empty();
         }
     }

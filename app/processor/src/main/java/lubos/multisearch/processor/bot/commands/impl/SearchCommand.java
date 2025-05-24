@@ -2,7 +2,7 @@ package lubos.multisearch.processor.bot.commands.impl;
 
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
 import lubos.multisearch.processor.bot.commands.PageableCommand;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.dto.SearchDTO;
 import lubos.multisearch.processor.service.SearchService;
 import org.springframework.data.domain.Page;
@@ -36,34 +36,33 @@ public class SearchCommand extends CommandProcessor implements PageableCommand {
     }
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        switch (actionMessage.contextId()) {
-            case MESSAGE, REPLY_MESSAGE, MENU_CALLBACK -> handleMessage(actionMessage, actionMessage.params());
-            case PAGING_CALLBACK -> handlePagingCallback(actionMessage, actionMessage.params());
+    public void process(CommandActionContext context) {
+        switch (context.contextId()) {
+            case MESSAGE, REPLY_MESSAGE, MENU_CALLBACK -> handleMessage(context, context.params());
+            case PAGING_CALLBACK -> handlePagingCallback(context, context.params());
         }
     }
 
-    private void handleMessage(ActionMessage actionMessage, Map<String, String> parameters) {
-//        String searchStr = String.join("", ctx.arguments());
+    private void handleMessage(CommandActionContext context, Map<String, String> parameters) {
         String searchStr = parameters.get(SEARCH_STR);
         Pageable pageable = pageConfigs().page();
-        process(actionMessage, searchStr, pageable);
+        process(context, searchStr, pageable);
     }
 
-    private void handlePagingCallback(ActionMessage actionMessage, Map<String, String> parameters) {
+    private void handlePagingCallback(CommandActionContext context, Map<String, String> parameters) {
         int pageNum = Integer.parseInt(parameters.get(SEARCH_PAGE));
         Pageable pageable = pageConfigs().page().withPage(pageNum);
-        String searchStr = searchService.getUserLastSearch(actionMessage.user().getId()).searchStr();
-        process(actionMessage, searchStr, pageable);
+        String searchStr = searchService.getUserLastSearch(context.user().getId()).searchStr();
+        process(context, searchStr, pageable);
     }
 
 
-    private void process(ActionMessage actionMessage, String searchStr, Pageable pageable) {
-        var page = searchService.search(searchStr, username(actionMessage), pageable);
-        Locale locale = userLocale(actionMessage);
+    private void process(CommandActionContext context, String searchStr, Pageable pageable) {
+        var page = searchService.search(searchStr, username(context), pageable);
+        Locale locale = userLocale(context);
         String result = pageToString(page, locale);
-        var keyboardRows = formKeyboard(page, actionMessage.user().getId(), locale);
-        sender.send(actionMessage.chatId(), result, keyboardRows);
+        var keyboardRows = formKeyboard(page, context.user().getId(), locale);
+        sender.send(context.chatId(), result, keyboardRows);
     }
 
     private List<InlineKeyboardRow> formKeyboard(Page<SearchDTO> page,

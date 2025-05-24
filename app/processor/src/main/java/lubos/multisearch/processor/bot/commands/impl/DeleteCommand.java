@@ -1,7 +1,7 @@
 package lubos.multisearch.processor.bot.commands.impl;
 
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.service.DocumentService;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -36,27 +36,27 @@ public class DeleteCommand extends CommandProcessor {
 
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        switch (actionMessage.contextId()) {
-            case MESSAGE, REPLY_MESSAGE, MENU_CALLBACK -> handleMessage(actionMessage, actionMessage.params());
-            case DOC_DELETE_CALLBACK -> handleCallback(actionMessage, actionMessage.params());
+    public void process(CommandActionContext context) {
+        switch (context.contextId()) {
+            case MESSAGE, REPLY_MESSAGE, MENU_CALLBACK -> handleMessage(context, context.params());
+            case DOC_DELETE_CALLBACK -> handleCallback(context, context.params());
         }
     }
 
-    private void handleMessage(ActionMessage actionMessage, Map<String, String> params) {
+    private void handleMessage(CommandActionContext context, Map<String, String> params) {
         String documentName = params.get(INPUT_ARG);
-        documentService.deleteDocument(documentName, actionMessage.user());
-        Locale locale = userLocale(actionMessage);
-        var keyboard = formKeyboard(params, actionMessage.user().getId(), locale);
-        sender.send(actionMessage.chatId(), message(DOCUMENT_DELETED, locale), keyboard);
+        documentService.deleteDocument(documentName, context.user());
+        Locale locale = userLocale(context);
+        var keyboard = formKeyboard(params, context.user().getId(), locale);
+        sender.send(context.chatId(), message(DOCUMENT_DELETED, locale), keyboard);
     }
 
-    private void handleCallback(ActionMessage actionMessage, Map<String, String> params) {
+    private void handleCallback(CommandActionContext context, Map<String, String> params) {
         String documentId = params.get(DOC_ID);
         documentService.deleteDocument(documentId);
-        Locale locale = userLocale(actionMessage);
-        var keyboard = formKeyboard(params, actionMessage.user().getId(), locale);
-        sender.send(actionMessage.chatId(), message(DOCUMENT_DELETED, locale), keyboard);
+        Locale locale = userLocale(context);
+        var keyboard = formKeyboard(params, context.user().getId(), locale);
+        sender.send(context.chatId(), message(DOCUMENT_DELETED, locale), keyboard);
     }
 
 

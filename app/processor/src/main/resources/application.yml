@@ -169,7 +169,11 @@ spring:
 #            elasticsearch:
 #              client:
 #                WIRE: TRACE
+
 logging:
+  structured:
+    format:
+      console: ecs
   level:
     tracer: TRACE
     org:

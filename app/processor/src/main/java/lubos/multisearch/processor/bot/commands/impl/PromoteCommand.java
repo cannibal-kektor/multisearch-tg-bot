@@ -2,7 +2,7 @@ package lubos.multisearch.processor.bot.commands.impl;
 
 import lubos.multisearch.processor.bot.commands.Command;
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.service.UserService;
 import org.springframework.stereotype.Component;
 
@@ -26,13 +26,13 @@ public class PromoteCommand extends CommandProcessor {
     }
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        String username = stripTag(actionMessage.params().get(USERNAME));
+    public void process(CommandActionContext context) {
+        String username = stripTag(context.params().get(USERNAME));
         String result = userService.promoteUser(username) ?
                 USER_PROMOTED : USER_ALREADY_ADMIN;
-        Locale locale = userLocale(actionMessage);
-        sender.send(actionMessage.chatId(), message(result, locale),
-                keyboard.commandsKeyboard(actionMessage.user().getId(), locale));
+        Locale locale = userLocale(context);
+        sender.send(context.chatId(), message(result, locale),
+                keyboard.commandsKeyboard(context.user().getId(), locale));
 
     }
 

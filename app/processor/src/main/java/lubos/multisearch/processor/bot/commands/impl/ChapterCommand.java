@@ -3,7 +3,7 @@ package lubos.multisearch.processor.bot.commands.impl;
 import lubos.multisearch.processor.bot.commands.Command;
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
 import lubos.multisearch.processor.bot.commands.PageableCommand;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.dto.ChapterDTO;
 import lubos.multisearch.processor.service.SearchService;
 import org.springframework.data.domain.Page;
@@ -42,32 +42,32 @@ public class ChapterCommand extends CommandProcessor implements PageableCommand 
     }
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        switch (actionMessage.contextId()) {
-            case MESSAGE, REPLY_MESSAGE, CHAPTER_EXPAND_CALLBACK -> handle(actionMessage, actionMessage.params());
-            case PAGING_CALLBACK -> handlePageableCallback(actionMessage, actionMessage.params());
+    public void process(CommandActionContext context) {
+        switch (context.contextId()) {
+            case MESSAGE, REPLY_MESSAGE, CHAPTER_EXPAND_CALLBACK -> handle(context, context.params());
+            case PAGING_CALLBACK -> handlePageableCallback(context, context.params());
         }
     }
 
-    private void handle(ActionMessage actionMessage, Map<String, String> params) {
+    private void handle(CommandActionContext context, Map<String, String> params) {
         String chapterId = params.get(CHAPTER_ID);
-        Page<ChapterDTO> page = searchService.getChapterById(chapterId, username(actionMessage));
+        Page<ChapterDTO> page = searchService.getChapterById(chapterId, username(context));
         String documentId = page.getContent().getFirst().documentId();
-        Locale locale = userLocale(actionMessage);
+        Locale locale = userLocale(context);
         String result = pageToString(page, locale);
-        var keyboardRows = formKeyboard(page, documentId, actionMessage.user().getId(), locale);
-        sender.send(actionMessage.chatId(), result, keyboardRows);
+        var keyboardRows = formKeyboard(page, documentId, context.user().getId(), locale);
+        sender.send(context.chatId(), result, keyboardRows);
     }
 
-    private void handlePageableCallback(ActionMessage actionMessage, Map<String, String> params) {
+    private void handlePageableCallback(CommandActionContext context, Map<String, String> params) {
         int serialNum = Integer.parseInt(params.get(CHAPTER_PAGE));
         var pageable = pageConfigs().page().withPage(serialNum);
         String documentId = params.get(DOC_ID);
-        Page<ChapterDTO> page = searchService.getChapterBySerialNumberInDocument(documentId, username(actionMessage), pageable);
-        Locale locale = userLocale(actionMessage);
+        Page<ChapterDTO> page = searchService.getChapterBySerialNumberInDocument(documentId, username(context), pageable);
+        Locale locale = userLocale(context);
         String result = pageToString(page, locale);
-        var keyboardRows = formKeyboard(page, documentId, actionMessage.user().getId(), locale);
-        sender.send(actionMessage.chatId(), result, keyboardRows);
+        var keyboardRows = formKeyboard(page, documentId, context.user().getId(), locale);
+        sender.send(context.chatId(), result, keyboardRows);
     }
 
     private List<InlineKeyboardRow> formKeyboard(Page<ChapterDTO> page, String documentId, Long userId, Locale locale) {

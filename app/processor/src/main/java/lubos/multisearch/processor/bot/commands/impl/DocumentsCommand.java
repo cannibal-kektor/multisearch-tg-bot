@@ -3,7 +3,7 @@ package lubos.multisearch.processor.bot.commands.impl;
 
 import lubos.multisearch.processor.bot.commands.CommandProcessor;
 import lubos.multisearch.processor.bot.commands.PageableCommand;
-import lubos.multisearch.processor.entrypoint.ActionMessage;
+import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.dto.DocumentDTO;
 import lubos.multisearch.processor.service.DocumentService;
 import org.springframework.data.domain.Page;
@@ -36,24 +36,24 @@ public class DocumentsCommand extends CommandProcessor implements PageableComman
     }
 
     @Override
-    public void processCommand(ActionMessage actionMessage) {
-        switch (actionMessage.contextId()) {
-            case MESSAGE, MENU_CALLBACK -> handle(actionMessage, pageConfigs().page());
+    public void process(CommandActionContext context) {
+        switch (context.contextId()) {
+            case MESSAGE, MENU_CALLBACK -> handle(context, pageConfigs().page());
             case PAGING_CALLBACK -> {
-                int pageNum = Integer.parseInt(actionMessage.params().get(DOCS_PAGE));
+                int pageNum = Integer.parseInt(context.params().get(DOCS_PAGE));
                 Pageable pageable = pageConfigs().page().withPage(pageNum);
-                handle(actionMessage, pageable);
+                handle(context, pageable);
             }
         }
     }
 
-    private void handle(ActionMessage actionMessage, Pageable pageable) {
-        Long userId = actionMessage.user().getId();
+    private void handle(CommandActionContext context, Pageable pageable) {
+        Long userId = context.user().getId();
         var page = documentService.listFiles(userId, pageable);
-        Locale locale = userLocale(actionMessage);
+        Locale locale = userLocale(context);
         String result = pageToString(page, locale);
         var keyboard = formKeyboard(page, userId, locale);
-        sender.send(actionMessage.chatId(), result, keyboard);
+        sender.send(context.chatId(), result, keyboard);
     }
 
     private List<InlineKeyboardRow> formKeyboard(Page<DocumentDTO> page, Long userId, Locale locale) {
