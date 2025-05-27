@@ -46,10 +46,11 @@ public class DefaultCommandHandler implements CommandHandler {
     @Override
     public void handleCommand(MessageContext ctx, Pattern inputPattern, String contextId) {
         try {
-            var parameters = parametersExtractor.extractParameters(ctx.update(), inputPattern);
-            var commandContext = new CommandActionContext(ctx.user(), command, ctx.update().getUpdateId(),
+            var upd = ctx.update();
+            var parameters = parametersExtractor.extractParameters(upd, inputPattern);
+            var commandContext = new CommandActionContext(ctx.user(), command, upd.getUpdateId(),
                     ctx.chatId(), contextId, parameters);
-            rabbitTemplate.convertAndSend(ctx.user().getId().toString(), commandContext);
+            rabbitTemplate.convertAndSend(upd.getUpdateId().toString(), commandContext);
         } catch (IncorrectInputFormatException ex) {
             ex.setCommand(command.name().toLowerCase());
             logHelper.logIncorrectInputFormat(ex);

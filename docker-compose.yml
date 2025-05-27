@@ -52,6 +52,8 @@ services:
         - BOT_USERNAME=${BOT_USERNAME}
         - BOT_TOKEN=${BOT_TOKEN}
         - BOT_CREATOR=${BOT_CREATOR}
+#    deploy:
+#      replicas: 2
     depends_on:
       rabbit01:
         condition: service_healthy

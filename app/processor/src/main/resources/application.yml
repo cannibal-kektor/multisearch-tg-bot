@@ -88,13 +88,13 @@ spring:
         await-termination-period: PT30S  #60 sec example - P3DT5H40M30S = 3Days, 5Hours, 40 Minutes and 30 Seconds
 
     #-----TaskSchedulingAutoConfiguration-----------------------
-  scheduling:
-    threadNamePrefix: Bot-Scheduling-caching-Thread-
-    pool:
-      size: 1
-    shutdown:
-      await-termination: true
-      await-termination-period: PT10S
+    scheduling:
+      threadNamePrefix: Bot-Scheduling-caching-Thread-
+      pool:
+        size: 1
+      shutdown:
+        await-termination: true
+        await-termination-period: PT10S
   # -----------------------------------------------------
 
   #--------------------------------------------------------------------------
