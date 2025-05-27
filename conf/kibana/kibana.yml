@@ -23,7 +23,7 @@ elasticsearch:
 xpack.fleet.agents.enabled: true
 #not nessasary
 xpack.fleet.agents.fleet_server.hosts:
-  - "https://fleet-server:8220"
+  - "https://elastic-agent:8220"
 xpack.fleet.packages:
   - name: fleet_server
     version: latest
@@ -44,19 +44,14 @@ xpack.fleet.packages:
 #  - name: apm
 #    version: latest
 xpack.fleet.agentPolicies:
-  - name: Fleet Server policy
-    id: fleet-server-policy
+  - name: Agent Collector policy
+    id: agent-collector-policy
     namespace: default
     monitoring_enabled: ['logs', 'metrics']
     package_policies:
       - name: Fleet Server
         package:
           name: fleet_server
-  - name: Agent Collector policy
-    id: agent-collector-policy
-    namespace: default
-    monitoring_enabled: ['logs', 'metrics']
-    package_policies:
       - name: RabbitMq
         package:
           name: rabbitmq

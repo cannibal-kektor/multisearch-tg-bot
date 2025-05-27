@@ -6,7 +6,7 @@ if [ -e ca/ca.pem ]; then
   echo "Certificates already exists."
   exit 0;
 fi
-mkdir -p ca app rabbit mongo fleet agent kibana elastic
+mkdir -p ca app rabbit mongo agent kibana elastic
 echo "Generating CA certificate"
 openssl genrsa -out ca/ca.key 4096
 openssl req -x509 -new -key ca/ca.key --days 1024 -out ca/ca.pem -section ca -config openssl.conf
@@ -28,7 +28,7 @@ create_certificate rabbit/rabbit01 rabbit_server
 create_certificate mongo/mongo01 mongo_server
 create_certificate elastic/elastic01 elastic_server
 create_certificate kibana/kibana kibana
-create_certificate fleet/fleet fleet
+#create_certificate fleet/fleet fleet
 create_certificate agent/agent agent
 create_certificate app/tgAppRabbit rabbit_client
 create_certificate app/tgAppMongo mongo_client
