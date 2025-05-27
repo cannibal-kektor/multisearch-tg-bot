@@ -25,13 +25,13 @@ services:
       elastic-agent:
         condition: service_started
     image: multisearch-telegram-bot
-    hostname: multisearchBot
-    container_name: multisearchBot
     environment:
       - BOT_USERNAME=${BOT_USERNAME}
       - BOT_TOKEN=${BOT_TOKEN}
       - BOT_CREATOR=${BOT_CREATOR}
       - AUTH_PATH=${AUTH_PATH}
+      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     volumes:
       - app-client-cert:/${AUTH_PATH}:ro
     labels:
@@ -39,6 +39,7 @@ services:
     networks:
       - rabbitmq-net
       - mongo-net
+      - elastic-net
 
   multisearchProcessor:
     build:
@@ -63,13 +64,13 @@ services:
       elastic-agent:
         condition: service_started
     image: multisearch-processor
-    hostname: multisearchProcessor
-    container_name: multisearchProcessor
     environment:
       - BOT_USERNAME=${BOT_USERNAME}
       - BOT_TOKEN=${BOT_TOKEN}
       - BOT_CREATOR=${BOT_CREATOR}
       - AUTH_PATH=${AUTH_PATH}
+      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     volumes:
       - app-client-cert:/${AUTH_PATH}:ro
     labels:

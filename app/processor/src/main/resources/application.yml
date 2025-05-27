@@ -32,8 +32,8 @@ spring:
   elasticsearch:
 #    uris: https://192.168.100.11:9200
     uris: https://elastic01:9200
-    username: elastic
-    password: testPassword
+    username: ${ELASTIC_USERNAME}
+    password: ${ELASTIC_PASSWORD}
     connection-timeout: 10000s
     socket-timeout: 10000s
     #    socket-keep-alive:
@@ -53,9 +53,6 @@ spring:
         elastic-client:
           truststore:
             certificate: "file:${app.auth-path}/ca.pem"
-          keystore:
-            certificate: "file:${app.auth-path}/tgAppElastic.pem"
-            private-key: "file:${app.auth-path}/tgAppElastic.key"
         rabbit-client:
           keystore:
             certificate: "file:${app.auth-path}/tgAppRabbit.pem"
@@ -185,3 +182,28 @@ logging:
 #          elasticsearch:
 #            client:
 #              WIRE: TRACE
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: [health, prometheus]
+#  endpoint:
+#    prometheus:
+#      enabled: true
+#  server:
+#    port: 8080
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${HOSTNAME}
+  elastic:
+    metrics:
+      export:
+        enabled: true
+        host: https://elastic01:9200
+        step: 10s
+        user-name: ${ELASTIC_USERNAME}
+        password: ${ELASTIC_PASSWORD}
+        index: metrics-multisearch

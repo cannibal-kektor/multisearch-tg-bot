@@ -1,4 +1,4 @@
-#debug: true
+debug: true
 bot:
   username: ${BOT_USERNAME}
   token: ${BOT_TOKEN}
@@ -127,7 +127,9 @@ spring:
           keystore:
             certificate: "file:${app.auth-path}/tgAppMongo.pem"
             private-key: "file:${app.auth-path}/tgAppMongo.key"
-
+        metric-elastic:
+          truststore:
+            certificate: "file:${app.auth-path}/ca.pem"
 
 logging:
   structured:
@@ -148,3 +150,29 @@ logging:
 #          elasticsearch:
 #            client:
 #              WIRE: TRACE
+
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: [health, prometheus]
+#  endpoint:
+#    prometheus:
+#      enabled: true
+#  server:
+#    port: 8080
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${HOSTNAME}
+  elastic:
+    metrics:
+      export:
+        enabled: true
+        host: https://elastic01:9200
+        step: 10s
+        user-name: ${ELASTIC_USERNAME}
+        password: ${ELASTIC_PASSWORD}
+        index: metrics-multisearch

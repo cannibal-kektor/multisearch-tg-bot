@@ -19,7 +19,7 @@ create_certificate()
 
 create_certificate testCert/tgAppRabbit rabbit_client
 create_certificate testCert/tgAppMongo mongo_client
-create_certificate testCert/tgAppElastic elastic_client
+#create_certificate testCert/tgAppElastic elastic_client
 
 #chown -R root:root .;
 find testCert -type d -exec chmod 755 {} \;

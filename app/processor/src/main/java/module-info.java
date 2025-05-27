@@ -36,6 +36,11 @@ open module botProcessor {
     requires com.rabbitmq.client;
     requires org.aspectj.weaver;
     requires org.slf4j;
+    requires micrometer.registry.elastic;
+    requires micrometer.core;
+    requires spring.boot.actuator.autoconfigure;
+    requires org.apache.httpcomponents.httpclient;
+    requires org.apache.httpcomponents.httpcore;
 
 
 }

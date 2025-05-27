@@ -39,6 +39,10 @@ xpack.fleet.packages:
     version: latest  
   - name: elastic_agent
     version: latest
+#  - name: prometheus
+#    version: latest
+#  - name: apm
+#    version: latest
 xpack.fleet.agentPolicies:
   - name: Fleet Server policy
     id: fleet-server-policy
@@ -167,6 +171,30 @@ xpack.fleet.agentPolicies:
       - name: Elastic Agent
         package:
           name: elastic_agent
+#      - name: Prometheus Collector
+#        package:
+#          name: prometheus
+#        id: prometheus-preconfigured-policy
+#        inputs:
+#          prometheus-prometheus/metrics:
+#            enabled: true
+#            streams:
+#              '[prometheus.collector]':
+#                enabled: true
+#                vars:
+#                  hosts:
+#                    - "multisearchBot:8080"
+#                    - "multisearchProcessor:8080"
+#                  metrics_path: "/actuator/prometheus"
+#                  period: "10s"
+#                  use_types: true
+#                  rate_counters: true
+#                  leaderelection: false
+#                  '[data_stream.dataset]': "prometheus.collector"
+#              '[prometheus.query]':
+#                enabled: false
+#              '[prometheus.remote_write]':
+#                enabled: false
 xpack.fleet.outputs:
   - id: my-elastic-output
     name: preconfigured elastic output

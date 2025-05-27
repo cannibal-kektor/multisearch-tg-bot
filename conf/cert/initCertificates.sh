@@ -32,7 +32,7 @@ create_certificate fleet/fleet fleet
 create_certificate agent/agent agent
 create_certificate app/tgAppRabbit rabbit_client
 create_certificate app/tgAppMongo mongo_client
-create_certificate app/tgAppElastic elastic_client
+#create_certificate app/tgAppElastic elastic_client
 
 #Combine
 cat mongo/mongo01.key >> mongo/mongo01.pem

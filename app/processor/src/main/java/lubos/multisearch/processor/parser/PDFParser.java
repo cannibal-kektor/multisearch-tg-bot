@@ -132,7 +132,8 @@ public class PDFParser implements Parser {
         if (nextTitle != null) {
             endIndex = chapterContent.indexOf(nextTitle, startIndex != -1 ? startIndex : 0);
         }
-        return chapterContent.substring(startIndex != -1 ? startIndex : 0, endIndex != -1 ? endIndex : chapterContent.length() - 1);
+        return chapterContent.substring(startIndex != -1 ? startIndex : 0,
+                endIndex != -1 ? endIndex : !chapterContent.isEmpty() ? chapterContent.length() - 1 : 0);
     }
 
 
