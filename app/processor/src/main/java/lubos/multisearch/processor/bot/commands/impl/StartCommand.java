@@ -29,8 +29,7 @@ public class StartCommand extends CommandProcessor {
     public void process(CommandActionContext context) {
         User user = context.user();
         Locale locale = TelegramUtils.userLocale(context);
-        sender.send(context.chatId(), message(INFO_DESCRIPTION_FULL, locale),
-                keyboard.commandsKeyboard(user.getId(), locale));
+        sender.send(context.chatId(), message(INFO_DESCRIPTION_FULL, locale));
 
         if (!userService.userExists(user.getId())) {
             if (user.getId() == botInfo.creatorId()) {

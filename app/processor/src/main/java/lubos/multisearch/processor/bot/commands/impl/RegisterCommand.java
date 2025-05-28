@@ -37,7 +37,8 @@ public class RegisterCommand extends CommandProcessor {
         String username = stripTag(context.params().get(USERNAME));
         Long pendingUserChatId = userService.registerUser(username);
         Locale locale = userLocale(context);
-        sender.send(pendingUserChatId, message(USER_REGISTRATION_REQUEST_APPROVED, locale));
+        sender.send(pendingUserChatId, message(USER_REGISTRATION_REQUEST_APPROVED, locale),
+                keyboard.buildUserCommandsKeyboard(locale));
         var keyboard = formKeyboard(context.params(), context.user().getId(), locale);
         sender.send(context.chatId(), message(USER_REGISTERED, locale), keyboard);
     }

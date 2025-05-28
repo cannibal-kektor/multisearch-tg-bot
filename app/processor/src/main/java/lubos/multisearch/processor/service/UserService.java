@@ -97,8 +97,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public boolean userExists(Long id) {
-        return userRepository.existsByTelegramId(id) ||
-                registrationRequestRepository.existsByTelegramId(id);
+        return userRepository.existsByTelegramId(id);
     }
 
     @Transactional(readOnly = true)
@@ -111,12 +110,14 @@ public class UserService {
 
     @Transactional
     public void createRequestForRegistration(User user, Long chatId) {
-        var registrationRequest = UserRegistrationRequest.builder()
-                .telegramId(user.getId())
-                .username(user.getUserName().toLowerCase())
-                .chatId(chatId)
-                .build();
-        registrationRequestRepository.insert(registrationRequest);
+        if (!registrationRequestRepository.existsByTelegramId(user.getId())) {
+            var registrationRequest = UserRegistrationRequest.builder()
+                    .telegramId(user.getId())
+                    .username(user.getUserName().toLowerCase())
+                    .chatId(chatId)
+                    .build();
+            registrationRequestRepository.insert(registrationRequest);
+        }
     }
 
     @Transactional

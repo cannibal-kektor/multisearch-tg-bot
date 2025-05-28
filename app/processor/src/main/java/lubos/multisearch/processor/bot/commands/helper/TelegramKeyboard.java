@@ -82,7 +82,7 @@ public class TelegramKeyboard {
         };
     }
 
-    private List<InlineKeyboardRow> buildUserCommandsKeyboard(Locale locale) {
+    public List<InlineKeyboardRow> buildUserCommandsKeyboard(Locale locale) {
         var firstRow = new InlineKeyboardRow(
                 button(MENU_COMMANDS_LIST_COMMANDS, MENU_CALLBACK_FORMAT.formatted(COMMANDS.name().toLowerCase()), locale),
                 button(MENU_COMMANDS_SEARCH, MENU_CALLBACK_FORMAT.formatted(SEARCH.name().toLowerCase()), locale),
@@ -94,7 +94,7 @@ public class TelegramKeyboard {
         return List.of(firstRow, secondRow);
     }
 
-    private List<InlineKeyboardRow> buildAdminCommandsKeyboard(Locale locale) {
+    public List<InlineKeyboardRow> buildAdminCommandsKeyboard(Locale locale) {
         var lastRow = new InlineKeyboardRow(
                 button(MENU_COMMANDS_USERS, MENU_CALLBACK_FORMAT.formatted(USERS.name().toLowerCase()), locale),
                 button(MENU_COMMANDS_REGISTRATIONS_REQUESTS, MENU_CALLBACK_FORMAT.formatted(REGISTRATION_REQUESTS.name().toLowerCase()), locale));
