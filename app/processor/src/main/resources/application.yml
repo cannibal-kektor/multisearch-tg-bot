@@ -1,4 +1,3 @@
-debug: true
 bot:
   username: ${BOT_USERNAME}
   token: ${BOT_TOKEN}
@@ -172,16 +171,8 @@ logging:
     format:
       console: ecs
   level:
-    tracer: TRACE
-    org:
-      springframework:
-        data:
-          mongodb:
-            core:
-              MongoTemplate: DEBUG
-#          elasticsearch:
-#            client:
-#              WIRE: TRACE
+    root: info
+
 #management:
 #  endpoints:
 #    web:

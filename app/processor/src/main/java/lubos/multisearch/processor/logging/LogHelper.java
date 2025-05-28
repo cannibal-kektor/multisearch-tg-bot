@@ -35,27 +35,27 @@ public class LogHelper {
     }
 
     public void logCommandReceived() {
-        log.atError()
+        log.atDebug()
                 .setMessage(COMMAND_RECEIVED)
                 .log();
     }
 
     public void logCommandProcessed() {
-        log.atError()
+        log.atDebug()
                 .setMessage(COMMAND_PROCESSING_FINISHED)
                 .log();
     }
 
 
     public void logCommandProcessorStarted(String processorImpl) {
-        log.atError()
+        log.atDebug()
                 .setMessage(STARTING_COMMAND_PROCESSOR)
                 .addArgument(processorImpl)
                 .log();
     }
 
     public void logCommandProcessorFinished(String processorImpl) {
-        log.atError()
+        log.atDebug()
                 .setMessage(FINISHED_COMMAND_PROCESSOR)
                 .addArgument(processorImpl)
                 .log();

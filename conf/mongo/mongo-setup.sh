@@ -27,3 +27,6 @@ EOF
 #   }
 #  );
 #EOF
+mongosh --host mongo01:27017 -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD} --tls --tlsCAFile /etc/ssl/mongo/ca.pem --authenticationDatabase admin  <<EOF
+  db.setProfilingLevel(1, { slowms: 100 });
+EOF

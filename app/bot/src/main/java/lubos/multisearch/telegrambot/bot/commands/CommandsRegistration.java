@@ -1,12 +1,11 @@
 package lubos.multisearch.telegrambot.bot.commands;
 
+import lubos.multisearch.telegrambot.bot.commands.processing.impl.LoggingConfiguringCommandHandler;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.abilitybots.api.objects.Privacy;
-import org.telegram.telegrambots.abilitybots.api.sender.SilentSender;
 
-import java.util.Locale;
 import java.util.Map;
 
 import static lubos.multisearch.telegrambot.bot.commands.Command.DEFAULT;
@@ -28,7 +27,7 @@ public class CommandsRegistration {
     }
 
     @Bean
-    TelegramCommand banUserCommand( TelegramCommandBuilder builder) {
+    TelegramCommand banUserCommand(TelegramCommandBuilder builder) {
         return builder
                 .command(Command.BAN)
                 .commandInfo(CommandsConstants.BAN_INFO)
@@ -249,6 +248,18 @@ public class CommandsRegistration {
     }
 
     @Bean
+    TelegramCommand configureLoggingCommand(TelegramCommandBuilder builder,
+                                            LoggingConfiguringCommandHandler loggingHandler) {
+        return builder
+                .command(Command.LOGGING)
+                .commandInfo(CommandsConstants.LOGGING_INFO)
+                .privacy(Privacy.CREATOR)
+                .addNewCallback(CommandsConstants.LOGGING_CHANGE_CALLBACK_PATTERN, CommandsConstants.LOGGING_CALLBACK)
+                .commandHandler(loggingHandler)
+                .build();
+    }
+
+    @Bean
     TelegramCommand unknownUserInputDefaultCommand(TelegramCommandBuilder builder) {
 //      org.telegram.telegrambots.abilitybots.api.bot.BaseAbilityBot.getAbility
         return builder
@@ -262,5 +273,4 @@ public class CommandsRegistration {
                 )
                 .build();
     }
-
 }

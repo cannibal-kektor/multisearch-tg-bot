@@ -18,5 +18,6 @@ public enum Command {
     START,
     UNBAN,
     UPLOAD,
-    PURGE
+    PURGE,
+    LOGGING
 }

@@ -49,4 +49,4 @@ xpack:
 #      native.realm2:
 #        order: 2     
 #----------------------- END SECURITY CONFIGURATION -------------------------
-#logger.level: DEBUG
+logger.level: WARN

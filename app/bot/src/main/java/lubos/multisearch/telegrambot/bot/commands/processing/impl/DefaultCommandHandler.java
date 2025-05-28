@@ -10,47 +10,43 @@ import lubos.multisearch.telegrambot.bot.commands.processing.ParametersExtractor
 import lubos.multisearch.telegrambot.dto.CommandActionContext;
 import lubos.multisearch.telegrambot.logging.LogHelper;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.abilitybots.api.objects.MessageContext;
 
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.*;
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 
 @Scope(SCOPE_PROTOTYPE)
+@Primary
 @Component
 @Accessors(chain = true)
 public class DefaultCommandHandler implements CommandHandler {
 
-    final RabbitTemplate rabbitTemplate;
-    final MessageSource messageSource;
-    final LogHelper logHelper;
-
+    @Autowired
+    RabbitTemplate rabbitTemplate;
+    @Autowired
+    MessageSource messageSource;
+    @Autowired
+    LogHelper logHelper;
     @Setter
+    @Autowired
     public ParametersExtractor parametersExtractor;
     @Setter
     @Getter
     public Command command;
 
-    public DefaultCommandHandler(RabbitTemplate rabbitTemplate, MessageSource messageSource,
-                                 LogHelper logHelper, ParametersExtractor parametersExtractor) {
-        this.rabbitTemplate = rabbitTemplate;
-        this.messageSource = messageSource;
-        this.logHelper = logHelper;
-        this.parametersExtractor = parametersExtractor;
-    }
-
     @Override
     public void handleCommand(MessageContext ctx, Pattern inputPattern, String contextId) {
         try {
-            var upd = ctx.update();
-            var parameters = parametersExtractor.extractParameters(upd, inputPattern);
-            var commandContext = new CommandActionContext(ctx.user(), command, upd.getUpdateId(),
-                    ctx.chatId(), contextId, parameters);
-            rabbitTemplate.convertAndSend(upd.getUpdateId().toString(), commandContext);
+            var parameters = parametersExtractor.extractParameters(ctx.update(), inputPattern);
+            sendMsg(ctx, parameters, contextId);
         } catch (IncorrectInputFormatException ex) {
             ex.setCommand(command.name().toLowerCase());
             logHelper.logIncorrectInputFormat(ex);
@@ -60,5 +56,13 @@ public class DefaultCommandHandler implements CommandHandler {
             send(ctx, escape(ex.getMessage()));
         }
     }
+
+    void sendMsg(MessageContext ctx, Map<String, String> params, String contextId) {
+        var updateId = ctx.update().getUpdateId();
+        var commandContext = new CommandActionContext(ctx.user(), command, updateId,
+                ctx.chatId(), contextId, params);
+        rabbitTemplate.convertAndSend(updateId.toString(), commandContext);
+    }
+
 }
 

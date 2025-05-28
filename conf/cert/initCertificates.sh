@@ -9,7 +9,7 @@ fi
 mkdir -p ca app rabbit mongo agent kibana elastic
 echo "Generating CA certificate"
 openssl genrsa -out ca/ca.key 4096
-openssl req -x509 -new -key ca/ca.key --days 1024 -out ca/ca.pem -section ca -config openssl.conf
+openssl req -x509 -new -key ca/ca.key --days 1024 -out ca/ca.pem -section ca -config conf/openssl.conf
 openssl x509 -in ca/ca.pem -inform PEM -out ca/ca.crt
 echo "CA generated successfully at ${PWD}/ca/"
 
@@ -21,7 +21,7 @@ create_certificate()
   DESTINATION=$1
   SECTION=$2
   echo "Generating certificate for $SECTION"
-  openssl req -x509 -days 365 -noenc -out $DESTINATION.pem -keyout $DESTINATION.key -section $SECTION -config openssl.conf -CA ca/ca.pem -CAkey ca/ca.key
+  openssl req -x509 -days 365 -noenc -out $DESTINATION.pem -keyout $DESTINATION.key -section $SECTION -config conf/openssl.conf -CA ca/ca.pem -CAkey ca/ca.key
   echo "Generated successfully at ${PWD}/$DESTINATION"
 }
 create_certificate rabbit/rabbit01 rabbit_server

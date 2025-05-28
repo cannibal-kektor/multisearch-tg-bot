@@ -209,4 +209,4 @@ logging:
         type: json
   root:
     appenders: [json-layout]
-    level: info
+    level: warn

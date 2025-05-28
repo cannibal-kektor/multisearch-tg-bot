@@ -94,7 +94,7 @@ services:
     image: alpine/openssl:3.3.3
     restart: "no"
     volumes:
-      - ./conf/cert:/opt
+      - ./conf/cert:/opt/conf:ro
       -  ca-cert:/opt/ca
       -  rabbit-cert:/opt/rabbit
       -  mongo-cert:/opt/mongo
@@ -105,7 +105,7 @@ services:
     working_dir: /opt
     labels:
       - "monitor-non-ecs"
-    entrypoint: [ "sh", "/opt/initCertificates.sh"]
+    entrypoint: [ "sh", "conf/initCertificates.sh"]
 
   rabbit01:
     image: rabbitmq:3-management

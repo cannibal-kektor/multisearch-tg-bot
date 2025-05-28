@@ -1,4 +1,3 @@
-debug: true
 bot:
   username: ${BOT_USERNAME}
   token: ${BOT_TOKEN}
@@ -135,21 +134,8 @@ logging:
   structured:
     format:
       console: ecs
-#  org:
-#    telegram.telegrambots.abilitybots.api.bot.BaseAbilityBot: DEBUG
-
-
-#  level:
-#    tracer: TRACE
-#    org:
-#      springframework:
-#        data:
-#          mongodb:
-#            core:
-#              MongoTemplate: DEBUG
-#          elasticsearch:
-#            client:
-#              WIRE: TRACE
+  level:
+    root: info
 
 #management:
 #  endpoints:

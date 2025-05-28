@@ -38,25 +38,25 @@ public class LogHelper {
     }
 
     public void logBotInitializing() {
-        log.atError()
+        log.atInfo()
                 .setMessage(BOT_INITIALIZING)
                 .log();
     }
 
     public void logBotInitialized() {
-        log.atError()
+        log.atInfo()
                 .setMessage(BOT_INITIALIZED)
                 .log();
     }
 
     public void logMenuCommandsConfigured() {
-        log.atError()
+        log.atInfo()
                 .setMessage(MENU_COMMANDS_SET)
                 .log();
     }
 
     public void logUpdateReceived(Update update) {
-        log.atError()
+        log.atDebug()
                 .setMessage(UPDATE_RECEIVED)
                 .addArgument(() -> MESSAGE.test(update) ?
                         escape(update.getMessage().getText())
@@ -65,28 +65,28 @@ public class LogHelper {
     }
 
     public void logUpdateProcessed(Update update) {
-        log.atError()
+        log.atDebug()
                 .setMessage(UPDATE_PROCESSING_FINISHED)
                 .log();
     }
 
 
     public void logCommandHandlerStarted() {
-        log.atError()
+        log.atDebug()
                 .setMessage(STARTING_COMMAND_HANDLER)
                 .log();
 
     }
 
     public void logCommandHandlerFinished() {
-        log.atError()
+        log.atDebug()
                 .setMessage(FINISHED_COMMAND_HANDLER)
                 .log();
     }
 
 
     public void logIncorrectInputFormat(IncorrectInputFormatException ex) {
-        log.atError()
+        log.atDebug()
                 .setMessage(INCORRECT_COMMAND_INPUT)
                 .addArgument(() -> ex.getLocalizedMessage(messageSource, Locale.ENGLISH))
                 .setCause(ex)
