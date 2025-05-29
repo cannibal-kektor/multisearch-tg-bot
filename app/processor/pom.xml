@@ -8,28 +8,8 @@
     </parent>
     <artifactId>processor</artifactId>
     <name>Multisearch processor</name>
-    <url>http://maven.apache.org</url>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>24</java.version>
-        <org.mapstruct.version>1.6.0</org.mapstruct.version>
-        <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
-        <!--        <org.projectlombok.version>1.18.38</org.projectlombok.version>-->
-    </properties>
 
     <dependencies>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -42,88 +22,36 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.amqp</groupId>
-            <artifactId>spring-rabbit-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-
-        <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots-client</artifactId>
-            <version>7.7.1</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>5.2.5</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
-            <version>3.0.3</version>
         </dependency>
 
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.17.2</version>
         </dependency>
 
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-
-
-        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.google.common.html.types/types &ndash;&gt;-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.google.common.html.types</groupId>-->
-        <!--            <artifactId>types</artifactId>-->
-        <!--            <version>1.0.8</version>-->
-        <!--        </dependency>-->
-
-        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>33.3.1-jre</version>
         </dependency>
 
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${org.projectlombok.version}</version>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.mapstruct/mapstruct -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>${org.mapstruct.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok-mapstruct-binding</artifactId>
-            <version>${lombok-mapstruct-binding.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
         </dependency>
 
     </dependencies>
-
 
     <build>
         <plugins>
@@ -131,72 +59,30 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <!--                <version>3.11.0</version>-->
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <!--                    <generatedSourcesDirectory>target/generated-sources/java</generatedSourcesDirectory>-->
-                    <!--                    <compilerArgs>-->
-                    <!--                        <arg>-Aquerydsl.includedPackages=com.example.demo.book.model</arg>-->
-                    <!--                    </compilerArgs>-->
                     <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.mapstruct</groupId>
-                            <artifactId>mapstruct-processor</artifactId>
-                            <version>${org.mapstruct.version}</version>
-                        </path>
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>${org.projectlombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
                         </path>
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok-mapstruct-binding</artifactId>
-                            <version>${lombok-mapstruct-binding.version}</version>
-                        </path>
-                        <!--                        <path>-->
-                        <!--                            <groupId>com.querydsl</groupId>-->
-                        <!--                            <artifactId>querydsl-apt</artifactId>-->
-                        <!--                            <version>${querydsl.version}</version>-->
-                        <!--                            <classifier>jakarta</classifier>-->
-                        <!--&lt;!&ndash;                            <classifier>hibernate</classifier>&ndash;&gt;-->
-                        <!--                        </path>-->
-                        <path>
-                            <groupId>jakarta.persistence</groupId>
-                            <artifactId>jakarta.persistence-api</artifactId>
-                            <version>3.1.0</version>
                         </path>
                     </annotationProcessorPaths>
-                    <!--                    <compilerArgs>-->
-                    <!--                        <arg>-->
-                    <!--                            -Amapstruct.defaultComponentModel=spring-->
-                    <!--                        </arg>-->
-                    <!--                    </compilerArgs>-->
                 </configuration>
-                <!--                <dependencies>-->
-                <!--                    <dependency>-->
-                <!--                        <groupId>com.querydsl</groupId>-->
-                <!--                        <artifactId>querydsl-apt</artifactId>-->
-                <!--                        <version>${querydsl.version}</version>-->
-                <!--                        <classifier>hibernate</classifier>-->
-                <!--                    </dependency>-->
-                <!--                </dependencies>-->
             </plugin>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
             </plugin>
+
         </plugins>
     </build>
-
 
 </project>
