@@ -1,10 +1,13 @@
 bot:
-  username: ${BOT_USERNAME}
-  token: ${BOT_TOKEN}
-  creator-id: ${BOT_CREATOR}
+  username: ${file:${BOT_USERNAME_FILE}}
+  token: ${file:${BOT_TOKEN_FILE}}
+  creator-id: ${file:${BOT_CREATOR_FILE}}
 app:
   rabbit:
     tgActionExchangeName: tgAction.exchange
+  elastic:
+    username: ${file:${ELASTIC_USERNAME_FILE}}
+    password: ${file:${ELASTIC_PASSWORD_FILE}}
   auth-path: ${AUTH_PATH}
 
 spring:
@@ -159,6 +162,6 @@ management:
         enabled: true
         host: https://elastic01:9200
         step: 10s
-        user-name: ${ELASTIC_USERNAME}
-        password: ${ELASTIC_PASSWORD}
+        user-name: ${app.elastic.username}
+        password: ${app.elastic.password}
         index: metrics-multisearch
