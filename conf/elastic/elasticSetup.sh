@@ -1,10 +1,30 @@
 #!/bin/bash
 set -e
+
+ES_URL="https://elastic01:9200"
+CA_CERT="config/certs/ca.pem"
+
+SECRETS_LOCATION=/run/secrets
+ELASTIC_PASSWORD=$(grep '^ELASTIC_PASSWORD=' "$SECRETS_LOCATION/elastic_credentials" | cut -d'=' -f2)
+KIBANA_PASSWORD=$(grep '^KIBANA_PASSWORD=' "$SECRETS_LOCATION/kibana_credentials" | cut -d'=' -f2)
+
 echo "Waiting for Elasticsearch availability";
-until curl -s --cert config/certs/elastic01.pem --key config/certs/elastic01.key --cacert config/certs/ca.pem https://elastic01:9200 | grep -q "missing authentication credentials"; do sleep 3; done;
+
+TIMEOUT=50
+while ! curl -sS --cacert "$CA_CERT" -m 5 -u "elastic:$ELASTIC_PASSWORD" \
+        "$ES_URL/_security/user" > /dev/null ; do
+  sleep 2
+  TIMEOUT=$((TIMEOUT-2))
+  [ $TIMEOUT -le 0 ] && echo "Timeout waiting for ES" && exit 1
+done
+
 echo "Setting kibana_system password";
-until curl -s -X POST --cert config/certs/elastic01.pem --key config/certs/elastic01.key --cacert config/certs/ca.pem -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://elastic01:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
-#echo "Assigning specific parsing pipelines for docker logs";
+if ! curl -sS -X POST --cacert "$CA_CERT" -u elastic:"$ELASTIC_PASSWORD" -H "Content-Type: application/json" \
+ "$ES_URL/_security/user/kibana_system/_password" -d "{\"password\":\"$KIBANA_PASSWORD\"}" ; then
+      echo "Error while setting password for kibana_system"
+      exit 1;
+fi
+#echo Assigning specific parsing pipelines for docker logs;
 #curl -s -X PUT --cert config/certs/elastic01.pem --key config/certs/elastic01.key --cacert config/certs/ca.pem -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://elastic01:9200/_ingest/pipeline/logs-docker.container_logs@custom -d '
 #{
 #  "processors":[
@@ -130,7 +150,8 @@ until curl -s -X POST --cert config/certs/elastic01.pem --key config/certs/elast
 #fi
 
 echo "Assigning pipeline for distinguishing specific docker logs";
-if curl -s -X PUT --cert config/certs/elastic01.pem --key config/certs/elastic01.key --cacert config/certs/ca.pem -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://elastic01:9200/_ingest/pipeline/logs-docker.container_logs@custom -d '
+if curl -s -X PUT --cacert "$CA_CERT" -u elastic:"$ELASTIC_PASSWORD" -H "Content-Type: application/json" \
+ "$ES_URL/_ingest/pipeline/logs-docker.container_logs@custom" -d '
 {
   "processors":[
     {

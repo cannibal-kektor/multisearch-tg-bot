@@ -6,6 +6,15 @@ if [ -e ca/ca.pem ]; then
   echo "Certificates already exists."
   exit 0;
 fi
+
+SECRETS_LOCATION=/run/secrets
+RABBIT_USERNAME=$(grep '^username=' "$SECRETS_LOCATION/rabbit_credentials" | cut -d'=' -f2)
+export RABBIT_USERNAME
+MONGO_APP_USERNAME=$(grep '^app_username=' "$SECRETS_LOCATION/mongo_credentials" | cut -d'=' -f2)
+export MONGO_APP_USERNAME
+AGENT_USERNAME=$(grep '^agent_username=' "$SECRETS_LOCATION/mongo_credentials" | cut -d'=' -f2)
+export AGENT_USERNAME
+
 mkdir -p ca app rabbit mongo agent kibana elastic
 echo "Generating CA certificate"
 openssl genrsa -out ca/ca.key 4096
@@ -24,6 +33,7 @@ create_certificate()
   openssl req -x509 -days 365 -noenc -out $DESTINATION.pem -keyout $DESTINATION.key -section $SECTION -config conf/openssl.conf -CA ca/ca.pem -CAkey ca/ca.key
   echo "Generated successfully at ${PWD}/$DESTINATION"
 }
+
 create_certificate rabbit/rabbit01 rabbit_server
 create_certificate mongo/mongo01 mongo_server
 create_certificate elastic/elastic01 elastic_server

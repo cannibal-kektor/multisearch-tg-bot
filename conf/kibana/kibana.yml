@@ -64,8 +64,8 @@ xpack.fleet.agentPolicies:
             vars:
               hosts:
                 - "https://rabbit01:15671"
-              username: ${RABBITMQ_USER}
-              password: ${RABBITMQ_PASSWORD}
+              username: ${RABBIT_USERNAME}
+              password: ${RABBIT_PASSWORD}
       - name: Elasticsearch
         package:
           name: elasticsearch

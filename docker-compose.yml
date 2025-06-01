@@ -5,14 +5,11 @@ services:
   multisearchBot:
     build:
       context: ./app
-#      no_cache: true
       dockerfile: ./bot/Dockerfile
       additional_contexts:
-        - cert_conf=conf/cert
-      args:
-        - BOT_USERNAME=${BOT_USERNAME}
-        - BOT_TOKEN=${BOT_TOKEN}
-        - BOT_CREATOR=${BOT_CREATOR}
+        - cert_conf=conf/build
+      secrets:
+        - bot_credentials
     depends_on:
       rabbit01:
         condition: service_healthy
@@ -26,16 +23,18 @@ services:
         condition: service_started
     image: multisearch-telegram-bot
     healthcheck:
-      test: ["CMD-SHELL", "test -f /tmp/healthy || exit 1"]
+      test: [ "CMD-SHELL", "test -f /tmp/healthy || exit 1" ]
       interval: 30s
       timeout: 5s
+    secrets:
+      - source: bot_credentials
+        target: /run/secrets/bot_credentials
+        uid: "1000"
+        gid: "1000"
+        mode: 0400
     environment:
-      - BOT_USERNAME=${BOT_USERNAME}
-      - BOT_TOKEN=${BOT_TOKEN}
-      - BOT_CREATOR=${BOT_CREATOR}
-      - AUTH_PATH=${AUTH_PATH}
-      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      SPRING_CONFIG_IMPORT: file:/run/secrets/bot_credentials[.properties]
+      AUTH_PATH: ${AUTH_PATH}
     volumes:
       - app-client-cert:/${AUTH_PATH}:ro
     labels:
@@ -48,16 +47,13 @@ services:
   multisearchProcessor:
     build:
       context: ./app
-#      no_cache: true
       dockerfile: ./processor/Dockerfile
       additional_contexts:
-        - cert_conf=conf/cert
-      args:
-        - BOT_USERNAME=${BOT_USERNAME}
-        - BOT_TOKEN=${BOT_TOKEN}
-        - BOT_CREATOR=${BOT_CREATOR}
-#    deploy:
-#      replicas: 2
+        - cert_conf=conf/build
+      secrets:
+        - bot_credentials
+    #    deploy:
+    #      replicas: 2
     depends_on:
       rabbit01:
         condition: service_healthy
@@ -71,16 +67,18 @@ services:
         condition: service_started
     image: multisearch-processor
     healthcheck:
-      test: ["CMD-SHELL", "test -f /tmp/healthy || exit 1"]
+      test: [ "CMD-SHELL", "test -f /tmp/healthy || exit 1" ]
       interval: 30s
       timeout: 5s
+    secrets:
+      - source: bot_credentials
+        target: /run/secrets/bot_credentials
+        uid: "1000"
+        gid: "1000"
+        mode: 0400
     environment:
-      - BOT_USERNAME=${BOT_USERNAME}
-      - BOT_TOKEN=${BOT_TOKEN}
-      - BOT_CREATOR=${BOT_CREATOR}
-      - AUTH_PATH=${AUTH_PATH}
-      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      SPRING_CONFIG_IMPORT: file:/run/secrets/bot_credentials[.properties]
+      AUTH_PATH: ${AUTH_PATH}
     volumes:
       - app-client-cert:/${AUTH_PATH}:ro
     labels:
@@ -95,17 +93,20 @@ services:
     restart: "no"
     volumes:
       - ./conf/cert:/opt/conf:ro
-      -  ca-cert:/opt/ca
-      -  rabbit-cert:/opt/rabbit
-      -  mongo-cert:/opt/mongo
-      -  elastic-cert:/opt/elastic
-      -  kibana-cert:/opt/kibana
-      -  agent-cert:/opt/agent
-      -  app-client-cert:/opt/app
+      - ca-cert:/opt/ca
+      - rabbit-cert:/opt/rabbit
+      - mongo-cert:/opt/mongo
+      - elastic-cert:/opt/elastic
+      - kibana-cert:/opt/kibana
+      - agent-cert:/opt/agent
+      - app-client-cert:/opt/app
+    secrets:
+      - rabbit_credentials
+      - mongo_credentials
     working_dir: /opt
     labels:
       - "monitor-non-ecs"
-    entrypoint: [ "sh", "conf/initCertificates.sh"]
+    entrypoint: [ "sh", "conf/initCertificates.sh" ]
 
   rabbit01:
     image: rabbitmq:3-management
@@ -114,15 +115,15 @@ services:
     depends_on:
       setup-certificate:
         condition: service_completed_successfully
+    secrets:
+      - rabbit_credentials
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq/
-      - ./conf/rabbit/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-      - ./conf/rabbit/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
-      - ./conf/rabbit/setup_definition.json:/etc/rabbitmq/conf/setup_definition.json:ro
-      - rabbit-cert:/etc/rabbitmq/conf/certs:ro
+      - rabbit-cert:/opt/rabbit/certs:ro
+      - ./conf/rabbit:/etc/rabbitmq:ro
     labels:
       - "monitor-non-ecs"
-#    entrypoint: [ "sleep", "1000000000"]
+    entrypoint: [ "sh", "/etc/rabbitmq/entrypoint.sh" ]
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 10s
@@ -134,24 +135,6 @@ services:
     networks:
       - rabbitmq-net
 
-  setup-mongo:
-    image: mongo
-    depends_on:
-      mongo01:
-        condition: service_healthy
-    restart: "no"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-    labels:
-      - "monitor-non-ecs"
-    volumes:
-      - ./conf/mongo/mongo-setup.sh:/scripts/mongo-setup.sh:ro
-      - mongo-cert:/etc/ssl/mongo:ro
-    entrypoint: [ "bash", "/scripts/mongo-setup.sh"]
-    networks:
-      - mongo-net
-
   mongo01:
     image: mongo
     hostname: mongo01
@@ -161,49 +144,43 @@ services:
         condition: service_completed_successfully
     ports:
       - 27017:27017
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-    command: ["mongod","--config", "/etc/mongod.conf"]
     healthcheck:
-      test: >
-        echo 'db.runCommand("ping").ok' | mongosh --host mongo01:27017
-        -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD} 
-        --quiet --tls --tlsCAFile /etc/ssl/mongo/ca.pem --authenticationDatabase admin --eval
-      interval: 5s
-      timeout: 30s
-      start_period: 10s
-      start_interval: 1s
-      retries: 5
+      test: ["CMD-SHELL", "/etc/mongo/healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      start_period: 20s
+      start_interval: 2s
+      retries: 3
     labels:
       - "monitor-non-ecs"
+    secrets:
+      - mongo_credentials
     volumes:
       - mongo-data:/data/db
-      - ./conf/mongo/mongod.conf:/etc/mongod.conf:ro
-      - ./conf/mongo/mongo-create-user.js:/docker-entrypoint-initdb.d/mongo-create-user.js:ro
       - mongo-cert:/etc/ssl/mongo:ro
+      - ./conf/mongo:/etc/mongo:ro
+    entrypoint: [ "/etc/mongo/entrypoint.sh" ]
+    command: [ "mongod","--config", "/etc/mongo/mongod.conf" ]
     networks:
       - mongo-net
 
-  setup-elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+  setup-mongo:
+    image: mongo
     depends_on:
-      elastic01:
+      mongo01:
         condition: service_healthy
     restart: "no"
     labels:
       - "monitor-non-ecs"
-    environment:
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-      - KIBANA_PASSWORD=${KIBANA_PASSWORD}
+    secrets:
+      - mongo_credentials
     volumes:
-      - ./conf/elastic/elasticSetup.sh:/usr/share/elasticsearch/config/elasticSetup.sh:ro
-      - elastic-cert:/usr/share/elasticsearch/config/certs:ro
-    command: >
-      bash config/elasticSetup.sh
+      - ./conf/mongo/mongo-replica-setup.sh:/scripts/mongo-replica-setup.sh:ro
+      - mongo-cert:/etc/ssl/mongo:ro
+    entrypoint: [ "bash", "/scripts/mongo-replica-setup.sh" ]
     networks:
-      - elastic-net
-      
+      - mongo-net
+
   elastic01:
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     depends_on:
@@ -213,29 +190,49 @@ services:
     container_name: elastic01
     environment:
       - ES_PORT=${ES_PORT}
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     volumes:
       - es-data01:/usr/share/elasticsearch/data
       - ./conf/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+#      - ./conf/elastic/elasticSetup.sh:/usr/share/elasticsearch/config/init/elasticSetup.sh:ro
+      - ./conf/elastic/entrypoint.sh:/etc/elastic/entrypoint.sh:ro
+      - ./conf/elastic/healthcheck.sh:/etc/elastic/healthcheck.sh:ro
       - elastic-cert:/usr/share/elasticsearch/config/certs:ro
+    secrets:
+      - elastic_credentials
     labels:
       - "monitor-ecs"
     ports:
       - ${ES_PORT}:9200
+    entrypoint: [ "bash", "/etc/elastic/entrypoint.sh" ]
+    healthcheck:
+      test: ["CMD", "/etc/elastic/healthcheck.sh"]
+      interval: 10s
+      timeout: 35s
+      retries: 5
     mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
         soft: -1
         hard: -1
-    healthcheck:
-      test: >
-        curl -s --cert config/certs/elastic01.pem --key config/certs/elastic01.key
-        --cacert config/certs/ca.pem https://localhost:9200 |
-        grep -q 'missing authentication credentials'
-      interval: 10s
-      timeout: 10s
-      retries: 5
-    
+    networks:
+      - elastic-net
+
+  setup-elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    depends_on:
+      elastic01:
+        condition: service_healthy
+    restart: "no"
+    labels:
+      - "monitor-non-ecs"
+    volumes:
+      - ./conf/elastic/elasticSetup.sh:/usr/share/elasticsearch/config/elasticSetup.sh:ro
+      - elastic-cert:/usr/share/elasticsearch/config/certs:ro
+    secrets:
+      - elastic_credentials
+      - kibana_credentials
+    command: >
+      bash config/elasticSetup.sh
     networks:
       - elastic-net
 
@@ -252,22 +249,23 @@ services:
     volumes:
       - kibana-data:/usr/share/kibana/data
       - ./conf/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      - ./conf/kibana/entrypoint.sh:/etc/kibana/entrypoint.sh:ro
       - kibana-cert:/usr/share/kibana/config/certs:ro
+    secrets:
+      - kibana_credentials
+      - rabbit_credentials
     ports:
       - ${KIBANA_PORT}:5601
-    environment:
-      - KIBANA_USERNAME=${KIBANA_USERNAME}
-      - KIBANA_PASSWORD=${KIBANA_PASSWORD}
-      - RABBITMQ_USER=${RABBITMQ_USER}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+    entrypoint: [ "sh", "/etc/kibana/entrypoint.sh" ]
     mem_limit: ${MEM_LIMIT}
     healthcheck:
       test: >
-        curl -s -I --cacert config/certs/ca.pem https://localhost:5601 |
-        grep -q 'HTTP/1.1 302 Found'
+        curl -s --cacert config/certs/ca.pem https://localhost:5601/api/status?v8format=true | 
+        grep -q '\"overall\":{\"level\":\"available\"'
       interval: 10s
       timeout: 10s
       retries: 5
+      start_period: 30s
     networks:
       - elastic-net
 
@@ -292,8 +290,6 @@ services:
       - FLEET_SERVER_POLICY_ID=agent-collector-policy
       - KIBANA_FLEET_SETUP=1
       - KIBANA_FLEET_HOST=https://kibana:5601
-      - KIBANA_FLEET_USERNAME=${ELASTIC_USERNAME}
-      - KIBANA_FLEET_PASSWORD=${ELASTIC_PASSWORD}
       - KIBANA_FLEET_CA=/usr/share/elastic-agent/certs/ca.pem
       - FLEET_SERVER_CERT=/usr/share/elastic-agent/certs/agent.pem
       - FLEET_SERVER_CERT_KEY=/usr/share/elastic-agent/certs/agent.key
@@ -311,15 +307,13 @@ services:
       - elastic-agent-data:/usr/share/elastic-agent
       - agent-cert:/usr/share/elastic-agent/certs:ro
       - ca-cert:/usr/local/share/ca-certificates:ro
+      - ./conf/agent/entrypoint.sh:/etc/agent/entrypoint.sh:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
-#      - ./certificates/ca/ca.pem:/etc/ssl/certs/ca.pem
-    entrypoint:
-      - bash
-      - -c
-      - |
-        update-ca-certificates
-        /usr/bin/tini -- /usr/local/bin/docker-entrypoint $@
+    #      - ./certificates/ca/ca.pem:/etc/ssl/certs/ca.pem
+    secrets:
+      - elastic_credentials
+    entrypoint: [ "sh", "/etc/agent/entrypoint.sh" ]
     networks:
       - elastic-net
       - rabbitmq-net
@@ -343,3 +337,15 @@ volumes:
   es-data01:
   kibana-data:
   elastic-agent-data:
+
+secrets:
+  bot_credentials:
+    file: ./secret/bot.secret
+  rabbit_credentials:
+    file: ./secret/rabbit.secret
+  mongo_credentials:
+    file: ./secret/mongo.secret
+  elastic_credentials:
+    file: ./secret/elastic.secret
+  kibana_credentials:
+    file: ./secret/kibana.secret

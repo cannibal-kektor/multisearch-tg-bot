@@ -1,10 +1,13 @@
-bot:
-  username: ${BOT_USERNAME}
-  token: ${BOT_TOKEN}
-  creator-id: ${BOT_CREATOR}
+#bot:
+#  username:
+#  token:
+#  creator-id:
+#elastic:
+#  username:
+#  password:
+rabbit:
+  tgActionExchangeName: tgAction.exchange
 app:
-  rabbit:
-    tgActionExchangeName: tgAction.exchange
   auth-path: ${AUTH_PATH}
 
 spring:
@@ -76,7 +79,7 @@ spring:
 #    address-shuffle-mode: inorder
 #    host: localhost
 #    port: 5672
-    username: telegramApp
+#    username: telegramApp
 #    password: guest
 #    publisher-confirm-type: none(def)
 #    publisher-returns: false(def)
@@ -88,7 +91,7 @@ spring:
 #        mode: connection
 #        size: установить в кол-во нод
     template:
-      exchange: ${app.rabbit.tgActionExchangeName}
+      exchange: ${rabbit.tgActionExchangeName}
 #      routing-key: ${app-config.rabbit.tgActionRoutingKey}
 #      statefull retry для sender не нужен походу
       retry:
@@ -159,6 +162,6 @@ management:
         enabled: true
         host: https://elastic01:9200
         step: 10s
-        user-name: ${ELASTIC_USERNAME}
-        password: ${ELASTIC_PASSWORD}
+        user-name: ${elastic.username}
+        password: ${elastic.password}
         index: metrics-multisearch

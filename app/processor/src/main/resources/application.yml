@@ -1,10 +1,13 @@
-bot:
-  username: ${BOT_USERNAME}
-  token: ${BOT_TOKEN}
-  creator-id: ${BOT_CREATOR}
+#bot:
+#  username:
+#  token:
+#  creator-id:
+#elastic:
+#  username:
+#  password:
+rabbit:
+  tgActionExchangeName: tgAction.exchange
 app:
-  rabbit:
-    tgActionExchangeName: tgAction.exchange
   auth-path: ${AUTH_PATH}
 
 spring:
@@ -31,8 +34,8 @@ spring:
   elasticsearch:
 #    uris: https://192.168.100.11:9200
     uris: https://elastic01:9200
-    username: ${ELASTIC_USERNAME}
-    password: ${ELASTIC_PASSWORD}
+    username: ${elastic.username}
+    password: ${elastic.password}
     connection-timeout: 10000s
     socket-timeout: 10000s
     #    socket-keep-alive:
@@ -112,7 +115,7 @@ spring:
 #    address-shuffle-mode: inorder
 #    host: localhost
 #    port: 5672
-    username: telegramApp
+#    username: telegramApp
 #    password: guest
 #    virtual-host:
 #    cache:
@@ -195,6 +198,6 @@ management:
         enabled: true
         host: https://elastic01:9200
         step: 10s
-        user-name: ${ELASTIC_USERNAME}
-        password: ${ELASTIC_PASSWORD}
+        user-name: ${elastic.username}
+        password: ${elastic.password}
         index: metrics-multisearch

@@ -18,8 +18,8 @@ RUN java -Djarmode=tools -jar multisearchBot.jar extract --layers --destination 
 
 FROM eclipse-temurin:24-alpine
 ARG BUILD_PATH=/opt/build/extracted
-RUN addgroup -S telegramApp \
-   && adduser -S --shell /bin/bash -G telegramApp telegramApp
+RUN addgroup -S --gid 1000 telegramApp \
+   && adduser -S --shell /bin/bash -G telegramApp --uid 1000 telegramApp
 #RUN groupadd --gid 999 telegramApp \
 #  && useradd -rm -d /home/telegramApp -s /bin/bash -g telegramApp -u 999 telegramApp
 USER telegramApp
@@ -31,12 +31,14 @@ COPY --from=optimizer $BUILD_PATH/spring-boot-loader/ ./
 COPY --from=optimizer $BUILD_PATH/snapshot-dependencies/ ./
 COPY --from=optimizer $BUILD_PATH/application/ ./
 
-ARG BOT_TOKEN=${BOT_TOKEN}
-ARG BOT_USERNAME=${BOT_USERNAME}
-ARG BOT_CREATOR=${BOT_CREATOR}
-ARG AUTH_PATH=/app/testCert
+RUN --mount=from=cert_conf,target=/app/cert_conf sh cert_conf/buildMockCertificates.sh
 
-RUN --mount=from=cert_conf,target=/app/cert_conf sh cert_conf/initTestCertificates.sh
+#ARG BOT_TOKEN=${BOT_TOKEN}
+#ARG BOT_USERNAME=${BOT_USERNAME}
+#ARG BOT_CREATOR=${BOT_CREATOR}
+#ARG BOT_TOKEN_PATH
+#ARG BOT_USERNAME_PATH
+#ARG BOT_CREATOR_PATH
 
 ############AOT###########################
 # Execute the AOT cache training run
@@ -50,9 +52,15 @@ RUN --mount=from=cert_conf,target=/app/cert_conf sh cert_conf/initTestCertificat
 # This layout is efficient to start up and AOT cache friendly
 #ENTRYPOINT ["java", "-XX:AOTCache=app.aot", "-jar", "multisearchBot.jar"]
 #########################
-
 # Execute the CDS training run
-RUN java -XX:ArchiveClassesAtExit=multisearchBot.jsa -Dspring.context.exit=onRefresh -jar multisearchBot.jar && rm -r testCert
+ARG AUTH_PATH=/app/testCert
+RUN --mount=type=secret,id=bot_credentials,target=/run/secrets/bot_credentials,uid=1000,gid=1000,mode=0400 \
+    java \
+      -XX:ArchiveClassesAtExit=multisearchBot.jsa \
+      -Dspring.context.exit=onRefresh \
+      -Dspring.config.import=file:/run/secrets/bot_credentials[.properties] \
+      -jar multisearchBot.jar && \
+    rm -r testCert
 
 # Start the application jar with CDS enabled - this is not the uber jar used by the builder
 # This jar only contains application code and references to the extracted jar files

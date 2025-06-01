@@ -16,13 +16,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
+import static com.rabbitmq.client.DefaultSaslConfig.EXTERNAL;
+
 
 @Configuration
 public class RabbitConfiguration implements RabbitListenerConfigurer {
 
     private final LocalValidatorFactoryBean validator;
 
-    @Value("${app.rabbit.tgActionExchangeName}")
+    @Value("${rabbit.tgActionExchangeName}")
     private String tgActionExchangeName;
 
 
@@ -103,6 +105,7 @@ public class RabbitConfiguration implements RabbitListenerConfigurer {
                 super.configure(connectionFactory, rabbitProperties);
                 connectionFactory.setExecutor(taskExecutor);
                 connectionFactory.setConnectionNameStrategy(cns());
+                connectionFactory.getRabbitConnectionFactory().setSaslConfig(EXTERNAL);
             }
         };
     }
