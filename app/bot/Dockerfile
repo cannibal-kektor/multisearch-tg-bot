@@ -1,44 +1,47 @@
 FROM maven:3-eclipse-temurin-24 AS builder
-#WORKDIR /usr/src/telegramBot
 WORKDIR /opt/build/app
 COPY pom.xml .
 WORKDIR bot
 COPY bot/pom.xml .
 RUN --mount=type=cache,target=/root/.m2 \
     mvn dependency:resolve-plugins dependency:resolve
-COPY bot/ .
+COPY bot/src src
 RUN --mount=type=cache,target=/root/.m2 \
     mvn -B -DskipTests package
 
-FROM eclipse-temurin:24-jdk AS optimizer
+FROM eclipse-temurin:24-jdk-alpine AS optimizer
 WORKDIR /opt/build
 COPY --from=builder /opt/build/app/bot/target/*.jar multisearchBot.jar
-#RUN java -Djarmode=layertools -jar telegramBot.jar extract
 RUN java -Djarmode=tools -jar multisearchBot.jar extract --layers --destination extracted
+RUN jdeps --ignore-missing-deps -q \
+    --recursive  \
+    --multi-release 24  \
+    --print-module-deps  \
+    --class-path 'extracted/dependencies/lib/*':'extracted/snapshot-dependencies/lib/*' \
+    multisearchBot.jar > deps.info
+RUN jlink \
+    --add-modules $(cat deps.info) \
+    --strip-debug \
+    --compress 2 \
+    --no-header-files \
+    --no-man-pages \
+    --output optimizedJRE24
 
-FROM eclipse-temurin:24-alpine
-ARG BUILD_PATH=/opt/build/extracted
-RUN addgroup -S --gid 1000 telegramApp \
-   && adduser -S --shell /bin/bash -G telegramApp --uid 1000 telegramApp
-#RUN groupadd --gid 999 telegramApp \
-#  && useradd -rm -d /home/telegramApp -s /bin/bash -g telegramApp -u 999 telegramApp
-USER telegramApp
+FROM alpine/openssl
+
+ENV JAVA_HOME /java/optimizedJRE24
+ENV PATH $JAVA_HOME/bin:$PATH
+ARG BUILD_PATH=/opt/build
+ARG BUILD_EXTRACTED=$BUILD_PATH/extracted
+
 WORKDIR /app
-
-#COPY --from=optimizer $BUILD_PATH/jdk $JAVA_HOME
-COPY --from=optimizer $BUILD_PATH/dependencies/ ./
-COPY --from=optimizer $BUILD_PATH/spring-boot-loader/ ./
-COPY --from=optimizer $BUILD_PATH/snapshot-dependencies/ ./
-COPY --from=optimizer $BUILD_PATH/application/ ./
+COPY --from=optimizer $BUILD_PATH/optimizedJRE24 $JAVA_HOME
+COPY --from=optimizer $BUILD_EXTRACTED/spring-boot-loader/ ./
+COPY --from=optimizer $BUILD_EXTRACTED/dependencies/ ./
+COPY --from=optimizer $BUILD_EXTRACTED/snapshot-dependencies/ ./
+COPY --from=optimizer $BUILD_EXTRACTED/application/ ./
 
 RUN --mount=from=cert_conf,target=/app/cert_conf sh cert_conf/buildMockCertificates.sh
-
-#ARG BOT_TOKEN=${BOT_TOKEN}
-#ARG BOT_USERNAME=${BOT_USERNAME}
-#ARG BOT_CREATOR=${BOT_CREATOR}
-#ARG BOT_TOKEN_PATH
-#ARG BOT_USERNAME_PATH
-#ARG BOT_CREATOR_PATH
 
 ############AOT###########################
 # Execute the AOT cache training run
@@ -64,7 +67,10 @@ RUN --mount=type=secret,id=bot_credentials,target=/run/secrets/bot_credentials,u
 # Start the application jar with CDS enabled - this is not the uber jar used by the builder
 # This jar only contains application code and references to the extracted jar files
 # This layout is efficient to start up and CDS friendly
+
+RUN addgroup -S --gid 1000 telegramApp \
+   && adduser -S --shell /bin/bash -G telegramApp --uid 1000 telegramApp
+USER telegramApp
+
 ENTRYPOINT ["java", "-XX:SharedArchiveFile=multisearchBot.jsa", "-jar", "multisearchBot.jar"]
 #ENTRYPOINT ["java", "-XX:SharedArchiveFile=multisearchBot.jsa", "-Xlog:class+load:file=cds.log", "-jar", "multisearchBot.jar"]
-
-#ENTRYPOINT ["java", "-jar", "multisearchBot.jar"]
