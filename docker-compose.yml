@@ -216,7 +216,7 @@ services:
       - elastic-net
 
   setup-elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    image: alpine/curl
     depends_on:
       elastic01:
         condition: service_healthy
@@ -224,13 +224,14 @@ services:
     labels:
       - "monitor-non-ecs"
     volumes:
-      - ./conf/elastic/elasticSetup.sh:/usr/share/elasticsearch/config/elasticSetup.sh:ro
-      - elastic-cert:/usr/share/elasticsearch/config/certs:ro
+      - ./conf/elastic/elasticSetup.sh:/etc/elastic/elasticSetup.sh:ro
+      - elastic-cert:/etc/elastic/certs:ro
     secrets:
       - elastic_credentials
       - kibana_credentials
-    command: >
-      bash config/elasticSetup.sh
+    working_dir: /etc/elastic
+    entrypoint: >
+      sh elasticSetup.sh
     networks:
       - elastic-net
 

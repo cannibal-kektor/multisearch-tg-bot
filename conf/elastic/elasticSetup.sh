@@ -2,7 +2,7 @@
 set -e
 
 ES_URL="https://elastic01:9200"
-CA_CERT="config/certs/ca.pem"
+CA_CERT="certs/ca.pem"
 
 SECRETS_LOCATION=/run/secrets
 ELASTIC_PASSWORD=$(grep '^ELASTIC_PASSWORD=' "$SECRETS_LOCATION/elastic_credentials" | cut -d'=' -f2)
