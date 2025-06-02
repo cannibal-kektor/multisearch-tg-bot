@@ -8,6 +8,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.regex.Pattern;
 
 import static java.lang.System.lineSeparator;
 import static lubos.multisearch.processor.bot.commands.helper.TelegramUtils.escape;
@@ -25,6 +27,10 @@ import static lubos.multisearch.processor.bot.commands.helper.TelegramUtils.esca
 public class PDFParser implements Parser {
 
     private static final String PDF = ".pdf";
+    private static final String PAGE_NUM = "Page №";
+    private static final Pattern removePageHeader = Pattern.compile("\\R{4,}(?<match>[^\\r\\n]{0,70})\\R");
+    private static final Pattern pageNumHeaderGuess = Pattern.compile("^(?=.{1,29}$)(\\d+.*|.*\\d+)$");
+    private static final Pattern largeGaps = Pattern.compile("\\R{3,}");
 
     @Override
     public boolean isSupported(String documentName) {
@@ -33,30 +39,32 @@ public class PDFParser implements Parser {
 
     public List<Chapter> parse(URL documentURL) throws IOException {
 
-//        File file = new File("D:\\test\\Nigel_Poulton_-_Docker_Deep_Dive_Zero_to_Docker_in_a_single_book_2020.pdf");
-//        File file = new File("D:\\test\\Getting_Started_with_RabbitMQ_and_CloudAMQP.pdf");
-//        File file = new File("D:\\test\\Алфёров А.П., Зубов А.Ю., Кузьмин А.С., Черемушкин А.В. Основы криптографии.pdf");
-
         try (InputStream inputStream = documentURL.openStream();
              PDDocument document = Loader.loadPDF(inputStream.readAllBytes())) {
-//        try (PDDocument document = Loader.loadPDF(new File(filename))) {
-
-            PDFTextStripper stripper = new PDFTextStripper();
-            stripper.setSortByPosition(true);
-            stripper.setAddMoreFormatting(true);
-
+            PDFTextStripper stripper = getPdfTextStripper();
             List<Chapter> results;
-
             PDDocumentOutline root = document.getDocumentCatalog().getDocumentOutline();
-
             if (root != null) {
                 results = parseDocumentWithOutline(document, stripper, root);
             } else {
                 results = parseDocumentPageByPage(document, stripper);
             }
-
             return results;
         }
+    }
+
+    @NotNull
+    private static PDFTextStripper getPdfTextStripper() {
+        PDFTextStripper stripper = new PDFTextStripper();
+        stripper.setSortByPosition(true);
+        stripper.setIndentThreshold(2.0f); // Отступ
+        stripper.setDropThreshold(2.5f); // Вертикальный пробел
+        stripper.setLineSeparator(" ");
+        stripper.setParagraphStart("\n");
+        stripper.setParagraphEnd("\n");
+        stripper.setArticleStart("\n");
+        stripper.setPageStart("\n");
+        return stripper;
     }
 
 
@@ -69,8 +77,8 @@ public class PDFParser implements Parser {
 
             Chapter chapter = Chapter.builder()
                     .type(DocumentType.FILE)
-                    .title("Page №" + i)
-                    .chapterPath("Page №" + i)
+                    .title(PAGE_NUM + i)
+                    .chapterPath(PAGE_NUM + i)
                     .serialNumber(i)
                     .content(escape(content))
                     .build();
@@ -85,25 +93,20 @@ public class PDFParser implements Parser {
         Queue<OutlineElement> contents = new LinkedList<>();
         PDOutlineItem item = outlineRoot.getFirstChild();
         buildDocumentContents(item, null, 1, contents);
-
         List<Chapter> results = new ArrayList<>();
-
         OutlineElement chapterInfo = contents.poll();
         if (chapterInfo != null) {
             OutlineElement nextChapter;
             String nextTitle = null;
-
             for (nextChapter = contents.poll(); ; ) {
                 stripper.setStartBookmark(chapterInfo.outline);
                 if (nextChapter != null) {
                     stripper.setEndBookmark(nextChapter.outline);
-                    nextTitle = lineSeparator() + nextChapter.title + lineSeparator();
+                    nextTitle = nextChapter.title;
                 }
-
                 String chapterContent = stripper.getText(document);
-                chapterContent = preciseContentBoundary(lineSeparator() + chapterInfo.title + lineSeparator(),
-                        nextChapter != null ? nextTitle : null, chapterContent);
-
+                chapterContent = preciseContentBoundary( chapterInfo.title, nextChapter != null ? nextTitle : null,
+                        chapterInfo.chapterPath, chapterContent);
                 Chapter chapter = Chapter.builder()
                         .type(DocumentType.FILE)
                         .title(chapterInfo.title)
@@ -111,9 +114,7 @@ public class PDFParser implements Parser {
                         .serialNumber(chapterInfo.serialNum)
                         .content(escape(chapterContent))
                         .build();
-
                 results.add(chapter);
-
                 if (nextChapter == null) {
                     break;
                 }
@@ -123,17 +124,37 @@ public class PDFParser implements Parser {
 
         }
         return results;
-
     }
 
-    private String preciseContentBoundary(String title, String nextTitle, String chapterContent) {
-        int startIndex = chapterContent.indexOf(title);
+    private String preciseContentBoundary(String title, String nextTitle, String titlePath, String chapterContent) {
+        int startIndex = chapterContent.indexOf(lineSeparator() +title);
         int endIndex = -1;
         if (nextTitle != null) {
-            endIndex = chapterContent.indexOf(nextTitle, startIndex != -1 ? startIndex : 0);
+            endIndex = chapterContent.indexOf(lineSeparator() + nextTitle, startIndex != -1 ? startIndex : 0);
         }
-        return chapterContent.substring(startIndex != -1 ? startIndex : 0,
+        var borderedContent = chapterContent.substring(startIndex != -1 ? startIndex : 0,
                 endIndex != -1 ? endIndex : !chapterContent.isEmpty() ? chapterContent.length() - 1 : 0);
+        return removeMeta(borderedContent, titlePath);
+    }
+
+    private String removeMeta(String content, String titlePath) {
+        var matcher = removePageHeader.matcher(content);
+        while (matcher.find()) {
+            boolean isHeader = false;
+            String match = matcher.group("match");
+            for( String title : titlePath.split(" / ") ){
+                if (match.contains(title)){
+                    isHeader = true;
+                    break;
+                }
+            }
+            if (pageNumHeaderGuess.matcher(match.strip()).find()){
+                isHeader = true;
+            }
+            if (isHeader)
+                content = content.replace(matcher.group(), "");
+        }
+        return largeGaps.matcher(content).replaceAll("");
     }
 
 
