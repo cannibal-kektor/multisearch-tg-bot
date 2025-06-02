@@ -53,14 +53,13 @@ RUN --mount=from=cert_conf,target=/app/cert_conf sh cert_conf/buildMockCertifica
 #ENTRYPOINT ["java", "-XX:AOTCache=app.aot", "-jar", "multisearchBot.jar"]
 #########################
 # Execute the CDS training run
-ARG AUTH_PATH=/app/testCert
 RUN --mount=type=secret,id=bot_credentials,target=/run/secrets/bot_credentials,uid=1000,gid=1000,mode=0400 \
     java \
       -XX:ArchiveClassesAtExit=multisearchBot.jsa \
       -Dspring.context.exit=onRefresh \
       -Dspring.config.import=file:/run/secrets/bot_credentials[.properties] \
       -jar multisearchBot.jar && \
-    rm -r testCert
+    rm -r certs
 
 # Start the application jar with CDS enabled - this is not the uber jar used by the builder
 # This jar only contains application code and references to the extracted jar files

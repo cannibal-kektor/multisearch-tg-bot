@@ -8,7 +8,7 @@
 rabbit:
   tgActionExchangeName: tgAction.exchange
 app:
-  auth-path: ${AUTH_PATH}
+  auth-path: /app/certs
 
 spring:
   application:

@@ -54,7 +54,6 @@ RUN --mount=from=cert_conf,target=/app/cert_conf sh cert_conf/buildMockCertifica
 #########################
 
 # Execute the CDS training run
-ARG AUTH_PATH=/app/testCert
 #https://github.com/spring-projects/spring-data-elasticsearch/issues/2876
 ARG SPRING_DATA_ELASTICSEARCH_SKIP_REPOSITORY_INIT=true
 RUN --mount=type=secret,id=bot_credentials,target=/run/secrets/bot_credentials,uid=1000,gid=1000,mode=0400 \
@@ -63,7 +62,7 @@ RUN --mount=type=secret,id=bot_credentials,target=/run/secrets/bot_credentials,u
       -Dspring.context.exit=onRefresh \
       -Dspring.config.import=file:/run/secrets/bot_credentials[.properties] \
       -jar multisearchProcessor.jar && \
-    rm -r testCert
+    rm -r certs
 # Start the application jar with CDS enabled - this is not the uber jar used by the builder
 # This jar only contains application code and references to the extracted jar files
 # This layout is efficient to start up and CDS friendly

@@ -7,7 +7,7 @@ services:
       context: ./app
       dockerfile: ./bot/Dockerfile
       additional_contexts:
-        - cert_conf=conf/build
+        cert_conf: conf/build
       secrets:
         - bot_credentials
     depends_on:
@@ -34,9 +34,8 @@ services:
         mode: 0400
     environment:
       SPRING_CONFIG_IMPORT: file:/run/secrets/bot_credentials[.properties]
-      AUTH_PATH: ${AUTH_PATH}
     volumes:
-      - app-client-cert:/${AUTH_PATH}:ro
+      - app-client-cert:/app/certs:ro
     labels:
       - "monitor-ecs"
     networks:
@@ -49,7 +48,7 @@ services:
       context: ./app
       dockerfile: ./processor/Dockerfile
       additional_contexts:
-        - cert_conf=conf/build
+        cert_conf: conf/build
       secrets:
         - bot_credentials
     #    deploy:
@@ -78,9 +77,8 @@ services:
         mode: 0400
     environment:
       SPRING_CONFIG_IMPORT: file:/run/secrets/bot_credentials[.properties]
-      AUTH_PATH: ${AUTH_PATH}
     volumes:
-      - app-client-cert:/${AUTH_PATH}:ro
+      - app-client-cert:/app/certs:ro
     labels:
       - "monitor-ecs"
     networks:
@@ -121,6 +119,9 @@ services:
       - rabbitmq-data:/var/lib/rabbitmq/
       - rabbit-cert:/opt/rabbit/certs:ro
       - ./conf/rabbit:/etc/rabbitmq:ro
+    ports:
+      - ${RABBIT_MANAGEMENT_PORT}:15671
+      - ${RABBIT_PORT}:5671
     labels:
       - "monitor-non-ecs"
     entrypoint: [ "sh", "/etc/rabbitmq/entrypoint.sh" ]
@@ -129,9 +130,6 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
-    ports:
-      - 15671:15671
-      - 5671:5671
     networks:
       - rabbitmq-net
 
@@ -143,7 +141,7 @@ services:
       setup-certificate:
         condition: service_completed_successfully
     ports:
-      - 27017:27017
+      - ${MONGO_PORT}:27017
     healthcheck:
       test: ["CMD-SHELL", "/etc/mongo/healthcheck.sh"]
       interval: 15s
@@ -189,7 +187,7 @@ services:
     hostname: elastic01
     container_name: elastic01
     environment:
-      - ES_PORT=${ES_PORT}
+      ES_PORT: ${ES_PORT}
     volumes:
       - es-data01:/usr/share/elasticsearch/data
       - ./conf/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
@@ -257,7 +255,6 @@ services:
     ports:
       - ${KIBANA_PORT}:5601
     entrypoint: [ "sh", "/etc/kibana/entrypoint.sh" ]
-    mem_limit: ${MEM_LIMIT}
     healthcheck:
       test: >
         curl -s --cacert config/certs/ca.pem https://localhost:5601/api/status?v8format=true | 
@@ -266,6 +263,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    mem_limit: ${MEM_LIMIT}
     networks:
       - elastic-net
 
@@ -282,20 +280,20 @@ services:
     user: root
     environment:
       #https://www.elastic.co/docs/reference/fleet/agent-environment-variables
-      - FLEET_SERVER_ENABLE=1
-      - FLEET_SERVER_ELASTICSEARCH_HOST=https://elastic01:9200
-      - FLEET_SERVER_ELASTICSEARCH_CA=/usr/share/elastic-agent/certs/ca.pem
-      - FLEET_SERVER_ES_CERT=/usr/share/elastic-agent/certs/agent.pem
-      - FLEET_SERVER_ES_CERT_KEY=/usr/share/elastic-agent/certs/agent.key
-      - FLEET_SERVER_POLICY_ID=agent-collector-policy
-      - KIBANA_FLEET_SETUP=1
-      - KIBANA_FLEET_HOST=https://kibana:5601
-      - KIBANA_FLEET_CA=/usr/share/elastic-agent/certs/ca.pem
-      - FLEET_SERVER_CERT=/usr/share/elastic-agent/certs/agent.pem
-      - FLEET_SERVER_CERT_KEY=/usr/share/elastic-agent/certs/agent.key
-      - FLEET_SERVER_PORT=8220
-      - FLEET_URL=https://elastic-agent:8220
-      - FLEET_CA=/usr/share/elastic-agent/certs/ca.pem
+      FLEET_SERVER_ENABLE: 1
+      FLEET_SERVER_ELASTICSEARCH_HOST: https://elastic01:9200
+      FLEET_SERVER_ELASTICSEARCH_CA: /usr/share/elastic-agent/certs/ca.pem
+      FLEET_SERVER_ES_CERT: /usr/share/elastic-agent/certs/agent.pem
+      FLEET_SERVER_ES_CERT_KEY: /usr/share/elastic-agent/certs/agent.key
+      FLEET_SERVER_POLICY_ID: agent-collector-policy
+      KIBANA_FLEET_SETUP: 1
+      KIBANA_FLEET_HOST: https://kibana:5601
+      KIBANA_FLEET_CA: /usr/share/elastic-agent/certs/ca.pem
+      FLEET_SERVER_CERT: /usr/share/elastic-agent/certs/agent.pem
+      FLEET_SERVER_CERT_KEY: /usr/share/elastic-agent/certs/agent.key
+      FLEET_SERVER_PORT: 8220
+      FLEET_URL: https://elastic-agent:8220
+      FLEET_CA: /usr/share/elastic-agent/certs/ca.pem
     healthcheck:
       test: >
         curl -s --cacert /usr/share/elastic-agent/certs/ca.pem https://localhost:8220/api/status |
