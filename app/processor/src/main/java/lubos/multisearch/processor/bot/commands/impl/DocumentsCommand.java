@@ -53,7 +53,7 @@ public class DocumentsCommand extends CommandProcessor implements PageableComman
         Locale locale = userLocale(context);
         String result = pageToString(page, locale);
         var keyboard = formKeyboard(page, userId, locale);
-        sender.send(context.chatId(), result, keyboard);
+        sender.sendDocs(context.chatId(), result, page, keyboard);
     }
 
     private List<InlineKeyboardRow> formKeyboard(Page<DocumentDTO> page, Long userId, Locale locale) {

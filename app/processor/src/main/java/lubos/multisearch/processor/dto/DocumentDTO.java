@@ -22,6 +22,10 @@ public record DocumentDTO(String id,
     private static final String FILE_DTO_FORMAT = "dto.document.file_format";
     private static final String HTML_DTO_FORMAT = "dto.document.html_format";
 
+    public boolean isFile(){
+        return documentType == DocumentType.FILE;
+    }
+
     @Override
     public String toLocalizedString(MessageSource messageSource, Locale locale) {
         return switch (documentType) {

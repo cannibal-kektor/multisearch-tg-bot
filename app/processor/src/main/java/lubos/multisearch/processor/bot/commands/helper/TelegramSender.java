@@ -1,15 +1,18 @@
 package lubos.multisearch.processor.bot.commands.helper;
 
+import lubos.multisearch.processor.dto.DocumentDTO;
 import lubos.multisearch.processor.exception.DocumentLinkFailedException;
 import lubos.multisearch.processor.logging.LogHelper;
 import org.jsoup.nodes.Entities;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.File;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
@@ -117,6 +120,19 @@ public class TelegramSender {
         return splittedMessage;
     }
 
+    public void sendDocs(Long chatId, String result, Page<DocumentDTO> page, List<InlineKeyboardRow> keyboard) {
+        page.getContent()
+                .stream()
+                .filter(DocumentDTO::isFile)
+                .map(dto ->
+                        SendDocument.builder()
+                                .chatId(chatId)
+                                .document(new InputFile(dto.telegramFileId()))
+                                .build())
+                .forEach(this::execute);
+        send(chatId, result, keyboard);
+    }
+
     private <T extends Serializable, Method extends BotApiMethod<T>> Optional<T> execute(Method method) {
         try {
             return ofNullable(telegramClient.execute(method));
@@ -126,5 +142,13 @@ public class TelegramSender {
         }
     }
 
+    private Optional<Message> execute(SendDocument sendDocument) {
+        try {
+            return ofNullable(telegramClient.execute(sendDocument));
+        } catch (TelegramApiException e) {
+            logHelper.logFailSendingTelegramFile(sendDocument, e);
+            return empty();
+        }
+    }
 
 }

@@ -5,6 +5,7 @@ import lubos.multisearch.processor.exception.ApplicationException;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.Locale;
@@ -20,6 +21,7 @@ public class LogHelper {
     public static final String FINISHED_COMMAND_PROCESSOR = "Finished Command processor [{}]";
     public static final String FAILED_COMMAND_PROCESSING = "Processing command failed. Reason: [{}]";
     public static final String FAILED_REQUEST_TO_TELEGRAM = "Failed request [{}] to Telegram. Reason: [{}]";
+    public static final String FAILED_SENDING_TG_FILE = "Failed sending uploaded file [{}] to user. Reason: [{}]";
 
     public static final String UPDATE_ID = "telegram.update_id";
     public static final String CHAT_ID = "telegram.chat_id";
@@ -77,6 +79,15 @@ public class LogHelper {
         log.atError()
                 .setMessage(FAILED_REQUEST_TO_TELEGRAM)
                 .addArgument(method.getMethod())
+                .addArgument(ex.getMessage())
+                .setCause(ex)
+                .log();
+    }
+
+    public void logFailSendingTelegramFile(SendDocument sendDocument, TelegramApiException ex) {
+        log.atError()
+                .setMessage(FAILED_SENDING_TG_FILE)
+                .addArgument(sendDocument.getFile().getAttachName())
                 .addArgument(ex.getMessage())
                 .setCause(ex)
                 .log();
