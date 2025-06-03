@@ -35,6 +35,7 @@ ARG BUILD_PATH=/opt/build
 ARG BUILD_EXTRACTED=$BUILD_PATH/extracted
 
 WORKDIR /app
+#COPY --from=optimizer /opt/java/openjdk $JAVA_HOME
 COPY --from=optimizer $BUILD_PATH/optimizedJRE24 $JAVA_HOME
 COPY --from=optimizer $BUILD_EXTRACTED/spring-boot-loader/ ./
 COPY --from=optimizer $BUILD_EXTRACTED/dependencies/ ./
@@ -73,4 +74,5 @@ RUN addgroup -S --gid 1000 telegramApp \
 USER telegramApp
 
 ENTRYPOINT ["java", "-XX:SharedArchiveFile=multisearchBot.jsa", "-jar", "multisearchBot.jar"]
+#ENTRYPOINT ["java", "-XX:SharedArchiveFile=multisearchBot.jsa","-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005", "-jar", "multisearchBot.jar"]
 #ENTRYPOINT ["java", "-XX:SharedArchiveFile=multisearchBot.jsa", "-Xlog:class+load:file=cds.log", "-jar", "multisearchBot.jar"]

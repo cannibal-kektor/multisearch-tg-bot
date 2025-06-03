@@ -5,6 +5,7 @@ import lubos.multisearch.processor.exception.ApplicationException;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -15,14 +16,14 @@ import java.util.Locale;
 public class LogHelper {
 
 
-    public static final String COMMAND_RECEIVED = "Telegram command message received";
-    public static final String COMMAND_PROCESSING_FINISHED = "Telegram command message processing finished";
-    public static final String STARTING_COMMAND_PROCESSOR = "Start Command processor [{}]";
-    public static final String FINISHED_COMMAND_PROCESSOR = "Finished Command processor [{}]";
-    public static final String FAILED_COMMAND_PROCESSING = "Processing command failed. Reason: [{}]";
-    public static final String FAILED_REQUEST_TO_TELEGRAM = "Failed request [{}] to Telegram. Reason: [{}]";
-    public static final String FAILED_SENDING_TG_FILE = "Failed sending uploaded file [{}] to user. Reason: [{}]";
-
+    private static final String COMMAND_RECEIVED = "Telegram command message received";
+    private static final String COMMAND_PROCESSING_FINISHED = "Telegram command message processing finished";
+    private static final String STARTING_COMMAND_PROCESSOR = "Start Command processor [{}]";
+    private static final String FINISHED_COMMAND_PROCESSOR = "Finished Command processor [{}]";
+    private static final String FAILED_COMMAND_PROCESSING = "Processing command failed. Reason: [{}]";
+    private static final String FAILED_REQUEST_TO_TELEGRAM = "Failed request [{}] to Telegram. Reason: [{}]";
+    private static final String FAILED_SENDING_TG_FILE = "Failed sending uploaded file [{}] to user. Reason: [{}]";
+    private static final String FAILED_SENDING_ANIMATION = "Failed sending animation [{}] to user. Reason: [{}]";
     public static final String UPDATE_ID = "telegram.update_id";
     public static final String CHAT_ID = "telegram.chat_id";
     public static final String USERNAME = "telegram.username";
@@ -91,5 +92,15 @@ public class LogHelper {
                 .addArgument(ex.getMessage())
                 .setCause(ex)
                 .log();
+    }
+
+    public void logFailSendingAnimation(SendAnimation sendAnimation, TelegramApiException ex) {
+        log.atError()
+                .setMessage(FAILED_SENDING_ANIMATION)
+                .addArgument(sendAnimation.getFile().getMediaName())
+                .addArgument(ex.getMessage())
+                .setCause(ex)
+                .log();
+
     }
 }

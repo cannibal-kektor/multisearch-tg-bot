@@ -35,6 +35,7 @@ ARG BUILD_PATH=/opt/build
 ARG BUILD_EXTRACTED=$BUILD_PATH/extracted
 
 WORKDIR /app
+#COPY --from=optimizer /opt/java/openjdk $JAVA_HOME
 COPY --from=optimizer $BUILD_PATH/optimizedJRE24 $JAVA_HOME
 COPY --from=optimizer $BUILD_EXTRACTED/dependencies/ ./
 COPY --from=optimizer $BUILD_EXTRACTED/spring-boot-loader/ ./

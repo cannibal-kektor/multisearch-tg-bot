@@ -64,7 +64,7 @@ public class AvailableCommandsCommand extends CommandProcessor {
                 .stream()
                 .filter(command -> command.getPrivacy() <= privacy)
                 .sorted(comparing(command -> command.getCommand().name()))
-                .map(command -> format("<b>/%s</b> --> %s", command.getCommand().toString().toLowerCase()
+                .map(command -> format("<b>/%s</b> ⟶ %s", command.getCommand().toString().toLowerCase()
                         , message(command.getCommandInfo(), locale)))
                 .collect(joining("\n", message(AVAILABLE_COMMANDS_PREFIX, locale), ""));
     }

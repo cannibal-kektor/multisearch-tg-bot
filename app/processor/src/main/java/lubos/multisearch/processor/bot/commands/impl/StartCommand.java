@@ -5,6 +5,8 @@ import lubos.multisearch.processor.bot.commands.CommandProcessor;
 import lubos.multisearch.processor.bot.commands.helper.TelegramUtils;
 import lubos.multisearch.processor.entrypoint.CommandActionContext;
 import lubos.multisearch.processor.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -18,6 +20,9 @@ public class StartCommand extends CommandProcessor {
     private static final String INFO_DESCRIPTION_FULL = "command.info.bot_description";
     private static final String REQUEST_FOR_REGISTRATION_PENDING = "command.start.registration_request_pending";
 
+    @Value("classpath:animations/start_animation.gif")
+    private Resource startAnimation;
+
     public final UserService userService;
 
     public StartCommand(UserService userService) {
@@ -28,16 +33,17 @@ public class StartCommand extends CommandProcessor {
     @Override
     public void process(CommandActionContext context) {
         User user = context.user();
+        Long chatId = context.chatId();
         Locale locale = TelegramUtils.userLocale(context);
-        sender.send(context.chatId(), message(INFO_DESCRIPTION_FULL, locale));
-
+        sender.sendAnimation(chatId, startAnimation);
+        sender.send(chatId, message(INFO_DESCRIPTION_FULL, locale));
         if (!userService.userExists(user.getId())) {
             if (user.getId() == botInfo.creatorId()) {
                 userService.createUser(user);
                 return;
             }
-            userService.createRequestForRegistration(user, context.chatId());
-            sender.send(context.chatId(), message(REQUEST_FOR_REGISTRATION_PENDING, locale));
+            userService.createRequestForRegistration(user, chatId);
+            sender.send(chatId, message(REQUEST_FOR_REGISTRATION_PENDING, locale));
         }
     }
 

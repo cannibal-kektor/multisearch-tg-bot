@@ -1,14 +1,18 @@
 package lubos.multisearch.processor.bot.commands.helper;
 
 import lubos.multisearch.processor.dto.DocumentDTO;
+import lubos.multisearch.processor.exception.ApplicationException;
 import lubos.multisearch.processor.exception.DocumentLinkFailedException;
 import lubos.multisearch.processor.logging.LogHelper;
 import org.jsoup.nodes.Entities;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.botapimethods.PartialBotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.File;
@@ -20,6 +24,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +41,8 @@ public class TelegramSender {
     //    static final int MAX_RAW_MESSAGE_SIZE = 2048;
     private static final Pattern REMOVE_HTML_TAGS_PATTERN = Pattern.compile("<b>|</b>|<blockquote>|</blockquote>|<code>|</code>|<i>|</i>|<u>|</u>|<em>|</em>");
 
-    private final LogHelper logHelper;
-    private final TelegramClient telegramClient;
+    final LogHelper logHelper;
+    final TelegramClient telegramClient;
 
     public TelegramSender(TelegramClient telegramClient, LogHelper logHelper) {
         this.telegramClient = telegramClient;
@@ -58,7 +63,7 @@ public class TelegramSender {
         if (message.length() < MAX_MESSAGE_SIZE)
             execute(buildHTMLMsg(chatId, message, keyboardRows));
         else {
-            var messages = splitMessage(message, MAX_MESSAGE_SIZE);
+            var messages = splitMessage(message);
             var iterator = messages.iterator();
             while (iterator.hasNext()) {
                 String msgStr = iterator.next();
@@ -105,10 +110,10 @@ public class TelegramSender {
     }
 
 
-    private List<String> splitMessage(String message, int maxSize) {
+    private List<String> splitMessage(String message) {
         int messageSize = message.length();
         List<String> splittedMessage = new ArrayList<>();
-        int step = maxSize;
+        int step = MAX_MESSAGE_SIZE;
         int i = 0;
         while (i < messageSize) {
             if (step > messageSize - i) {
@@ -129,8 +134,20 @@ public class TelegramSender {
                                 .chatId(chatId)
                                 .document(new InputFile(dto.telegramFileId()))
                                 .build())
-                .forEach(this::execute);
+                .forEach(this::executePartial);
         send(chatId, result, keyboard);
+    }
+
+    public void sendAnimation(Long chatId, Resource animationResource) {
+        try {
+            java.io.File mediaFile = animationResource.getFile();
+            executePartial(SendAnimation.builder()
+                    .chatId(chatId)
+                    .animation(new InputFile(mediaFile))
+                    .build());
+        } catch (IOException e) {
+            throw new ApplicationException(e.getMessage(), e);
+        }
     }
 
     private <T extends Serializable, Method extends BotApiMethod<T>> Optional<T> execute(Method method) {
@@ -142,13 +159,19 @@ public class TelegramSender {
         }
     }
 
-    private Optional<Message> execute(SendDocument sendDocument) {
+    private void executePartial(PartialBotApiMethod<Message> method) {
         try {
-            return ofNullable(telegramClient.execute(sendDocument));
+            switch (method) {
+                case SendDocument sendDocument -> telegramClient.execute(sendDocument);
+                case SendAnimation sendAnimation -> telegramClient.execute(sendAnimation);
+                default -> throw new ApplicationException("Unsupported method");
+            }
         } catch (TelegramApiException e) {
-            logHelper.logFailSendingTelegramFile(sendDocument, e);
-            return empty();
+            switch (method) {
+                case SendDocument sendDocument -> logHelper.logFailSendingTelegramFile(sendDocument, e);
+                case SendAnimation sendAnimation -> logHelper.logFailSendingAnimation(sendAnimation, e);
+                default -> throw new ApplicationException("Unsupported method");
+            }
         }
     }
-
 }
