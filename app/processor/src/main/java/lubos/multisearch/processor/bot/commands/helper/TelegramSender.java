@@ -140,10 +140,10 @@ public class TelegramSender {
 
     public void sendAnimation(Long chatId, Resource animationResource) {
         try {
-            java.io.File mediaFile = animationResource.getFile();
+            var file = new InputFile(animationResource.getInputStream(), "start_animation.gif");
             executePartial(SendAnimation.builder()
                     .chatId(chatId)
-                    .animation(new InputFile(mediaFile))
+                    .animation(file)
                     .build());
         } catch (IOException e) {
             throw new ApplicationException(e.getMessage(), e);
