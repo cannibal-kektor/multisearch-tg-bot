@@ -73,23 +73,12 @@ Telegram-бот для полнотекстового поиска по доку
     - Составление задачи из команды
     - Отправляет задачи в RabbitMQ
     - Проверка прав
-    - **Основные Фреймворки**:
-        - Spring Boot
-        - TelegramBots API
-        - Spring Data Mongo
-        - Spring AMQP
-
+   
 2. **Сервис Processor**:
     - Получает задачи из RabbitMQ
     - Выполняет бизнес-логику команд
     - Работает с базами данных
     - Отправляет ответ пользователям
-    - **Основные Фреймворки**:
-        - Spring Boot
-        - Spring Data Elasticsearch
-        - Spring Data Mongo
-        - Spring AMQP
-        - Document Parsing Libraries
 
 ### Поток данных
 
