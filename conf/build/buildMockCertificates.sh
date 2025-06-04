@@ -20,7 +20,3 @@ create_certificate()
 create_certificate certs/tgAppRabbit rabbit_client
 create_certificate certs/tgAppMongo mongo_client
 #create_certificate certs/tgAppElastic elastic_client
-
-#chown -R root:root .;
-find certs -type d -exec chmod 755 {} \;
-find certs -type f \( -name "*.pem" -o -name "*.key" \) -exec chmod 644 {} \;
