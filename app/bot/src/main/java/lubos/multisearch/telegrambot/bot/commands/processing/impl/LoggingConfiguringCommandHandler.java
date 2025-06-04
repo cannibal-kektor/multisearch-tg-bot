@@ -16,7 +16,6 @@ import static lubos.multisearch.telegrambot.bot.utils.TelegramHelperUtils.*;
 public class LoggingConfiguringCommandHandler extends DefaultCommandHandler {
 
     private static final String LEVEL = "level";
-    private static final String RESET = "reset";
 
     final LoggingSystem loggingSystem = LoggingSystem.get(getClass().getClassLoader());
 
@@ -40,7 +39,7 @@ public class LoggingConfiguringCommandHandler extends DefaultCommandHandler {
 
     void configureLogging(Map<String, String> parameters) {
         String level = parameters.get(LEVEL);
-        LogLevel logLevel = !level.equals(RESET) ? LogLevel.valueOf(level) : null;
+        LogLevel logLevel = LogLevel.valueOf(level);
         loggingSystem.setLogLevel(null, logLevel);
     }
 }

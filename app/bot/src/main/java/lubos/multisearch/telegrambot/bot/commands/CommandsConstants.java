@@ -98,7 +98,7 @@ public class CommandsConstants {
    public final String UNKNOWN_COMMAND_FALLBACK_MESSAGE = "command.default.fallback_message";
 
    public final String LOGGING_INFO = "command.logging.info";
-   public final Pattern LOGGING_CHANGE_CALLBACK_PATTERN = Pattern.compile("^logging (?<level>TRACE|DEBUG|INFO|WARN|ERROR|FATAL|OFF|reset)$");
+   public final Pattern LOGGING_CHANGE_CALLBACK_PATTERN = Pattern.compile("^logging (?<level>TRACE|DEBUG|INFO|WARN|ERROR|FATAL|OFF)$");
    public final String LOGGING_CALLBACK = "LOGGING_CALLBACK";
 }
 
